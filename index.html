@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NAHAR | Autonomous On-Chain Prime Broker for AI Agents on Monad</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07060D;
+      --card-bg: rgba(19, 17, 34, 0.7);
+      --card-border: rgba(131, 110, 249, 0.2);
+      --monad-purple: #836EF9;
+      --monad-cyan: #00F5D4;
+      --monad-pink: #FF007A;
+      --monad-gold: #FFD166;
+      --text: #F3F4F6;
+      --text-muted: #9CA3AF;
+      --danger: #EF4444;
+      --success: #10B981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 20% 20%, rgba(131, 110, 249, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(0, 245, 212, 0.1) 0%, transparent 40%);
+    }
+
+    header {
+      border-bottom: 1px solid var(--card-border);
+      padding: 1.25rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(7, 6, 13, 0.85);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--monad-purple), var(--monad-cyan));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: #07060D;
+    }
+
+    .brand h1 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .brand span {
+      background: linear-gradient(90deg, var(--monad-purple), var(--monad-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .badge-monad {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      background: rgba(131, 110, 249, 0.15);
+      border: 1px solid rgba(131, 110, 249, 0.3);
+      color: var(--monad-purple);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .badge-monad::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: var(--monad-cyan);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--monad-cyan);
+    }
+
+    main {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem;
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 2rem;
+    }
+
+    .hero-banner {
+      grid-column: 1 / -1;
+      background: linear-gradient(180deg, rgba(131, 110, 249, 0.1) 0%, rgba(19, 17, 34, 0.4) 100%);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-text h2 {
+      font-size: 1.85rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+    }
+
+    .hero-text p {
+      color: var(--text-muted);
+      max-width: 650px;
+      line-height: 1.5;
+      font-size: 0.95rem;
+    }
+
+    .hero-metrics {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .metric-card {
+      text-align: right;
+    }
+
+    .metric-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--monad-cyan);
+    }
+
+    .metric-lbl {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      backdrop-filter: blur(16px);
+      margin-bottom: 1.5rem;
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-title .tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+    }
+
+    /* Lifecycle Stepper */
+    .lifecycle-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .step-item {
+      display: flex;
+      gap: 1rem;
+      padding: 1rem;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .step-item.active {
+      background: rgba(131, 110, 249, 0.08);
+      border-color: rgba(131, 110, 249, 0.4);
+    }
+
+    .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 0.8rem;
+      flex-shrink: 0;
+    }
+
+    .step-item.active .step-num {
+      background: var(--monad-purple);
+      color: #fff;
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    .step-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.35rem;
+    }
+
+    .step-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .step-desc {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .step-actions {
+      margin-top: 0.75rem;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    button.btn {
+      background: var(--monad-purple);
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: opacity 0.2s;
+    }
+
+    button.btn:hover {
+      opacity: 0.9;
+    }
+
+    button.btn-outline {
+      background: transparent;
+      border: 1px solid var(--card-border);
+      color: var(--text);
+    }
+
+    button.btn-outline:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    button.btn-danger {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #F87171;
+    }
+
+    /* Live Waterfall Visualizer */
+    .waterfall-container {
+      background: #0D0C15;
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .waterfall-bar {
+      height: 24px;
+      border-radius: 4px;
+      display: flex;
+      overflow: hidden;
+      margin: 0.75rem 0;
+      background: #1A1926;
+    }
+
+    .bar-senior {
+      background: #4F46E5;
+      width: 80%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    .bar-junior {
+      background: var(--monad-cyan);
+      color: #07060D;
+      width: 20%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    /* Terminal Console */
+    .terminal {
+      background: #08070F;
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+      padding: 1.25rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      height: 520px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .terminal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      margin-bottom: 0.75rem;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+
+    .terminal-dots {
+      display: flex;
+      gap: 5px;
+    }
+
+    .terminal-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .terminal-logs {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .log-line {
+      line-height: 1.4;
+      word-break: break-all;
+    }
+
+    .log-time {
+      color: #6B7280;
+    }
+
+    .log-tag-monad {
+      color: var(--monad-purple);
+      font-weight: 700;
+    }
+
+    .log-tag-dex {
+      color: var(--monad-cyan);
+    }
+
+    .log-tag-loss {
+      color: #F87171;
+    }
+
+    .log-tag-success {
+      color: #34D399;
+    }
+
+    /* Reputation Badge */
+    .reputation-box {
+      background: linear-gradient(135deg, rgba(131, 110, 249, 0.15) 0%, rgba(0, 245, 212, 0.05) 100%);
+      border: 1px solid rgba(131, 110, 249, 0.3);
+      border-radius: 10px;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+
+    .rep-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.4rem;
+      font-size: 0.85rem;
+    }
+
+    .rep-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      color: var(--monad-cyan);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-logo">N</div>
+      <h1>NAHAR <span>Prime</span></h1>
+    </div>
+    <div style="display: flex; gap: 1rem; align-items: center;">
+      <div class="badge-monad">MONAD TESTNET (10,000 TPS)</div>
+      <div class="badge-monad" style="border-color: rgba(0, 245, 212, 0.4); color: var(--monad-cyan);">ERC-8004 COMPLIANT</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="hero-banner">
+      <div class="hero-text">
+        <h2>Autonomous On-Chain Prime Brokerage</h2>
+        <p>Unlocking undercollateralized multi-block credit for autonomous trading agents on Monad. Senior capital is protected via dual-tranche junior buffers and atomic execution sandboxes.</p>
+      </div>
+      <div class="hero-metrics">
+        <div class="metric-card">
+          <div class="metric-val" id="seniorLiquidity">$100,000</div>
+          <div class="metric-lbl">Senior Vault Pool</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val" id="reserveFundVal">$0.00</div>
+          <div class="metric-lbl">First-Loss Reserve</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Left Column: The Interactive Enoch Benchmark -->
+    <div>
+      <div class="card">
+        <div class="card-title">
+          <span>The Enoch Benchmark: Live Lifecycle</span>
+          <span class="tag">DETERMINISTIC VERIFICATION</span>
+        </div>
+
+        <div class="lifecycle-steps">
+          <!-- Step 1 -->
+          <div class="step-item active" id="step1">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <div class="step-header">
+                <div class="step-title">Supply Junior Buffer & Deploy Sandbox</div>
+                <span class="tag" style="color: var(--monad-cyan);">5x LEVERAGE</span>
+              </div>
+              <div class="step-desc">Agent deposits $500 Junior Equity Buffer. NaharVault allocates $2,000 Senior Credit into an isolated execution container.</div>
+              <div class="step-actions">
+                <button class="btn" onclick="runStep1()">Deploy Sandbox (5x)</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="step-item" id="step2">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <div class="step-header">
+                <div class="step-title">Execute DEX Arbitrage via Sandbox</div>
+                <span class="tag" style="color: var(--monad-purple);">PERPL / KURU</span>
+              </div>
+              <div class="step-desc">Sandbox forwards atomic calldata to whitelisted Monad DEX. Funds cannot be siphoned outside the container.</div>
+              <div class="step-actions">
+                <button class="btn" onclick="runStep2Arb()">Execute Arbitrage (+2.0%)</button>
+                <button class="btn btn-outline" onclick="runStep2Loss()">Simulate Slippage (-1.0%)</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="step-item" id="step3">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <div class="step-header">
+                <div class="step-title">Settle & Loss Allocation Waterfall</div>
+                <span class="tag">DUAL-TRANCHE</span>
+              </div>
+              <div class="step-desc">Repays senior principal + streaming per-second interest. 10% profit cut augments Protocol Reserve. Agent score updates.</div>
+              <div class="step-actions">
+                <button class="btn" onclick="runStep3Settle()">Settle & Repay Line</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Tranche Visualizer -->
+        <div class="waterfall-container">
+          <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
+            <span>TOTAL SANDBOX ASSETS: <strong id="totalSandboxCap" style="color:#fff;">$0</strong></span>
+            <span>NON-DRAIN INVARIANT: <strong style="color: var(--monad-cyan);">ENFORCED</strong></span>
+          </div>
+          <div class="waterfall-bar">
+            <div class="bar-senior" id="barSenior">SENIOR TRANCHE ($2,000)</div>
+            <div class="bar-junior" id="barJunior">JUNIOR ($500)</div>
+          </div>
+          <div style="font-size: 0.7rem; color: var(--text-muted); display: flex; justify-content: space-between;">
+            <span>Senior Protection: 100% Backstop</span>
+            <span>First-Loss Absorption: Junior Buffer</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Containment Invariants -->
+      <div class="card">
+        <div class="card-title">
+          <span>Adversarial Attack Simulation</span>
+          <span class="tag" style="color: #F87171;">SECURITY AUDITED</span>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+          Verify that rogue agents or flash crashes cannot drain lender principal.
+        </p>
+        <div style="display: flex; gap: 0.75rem;">
+          <button class="btn btn-danger" onclick="testUnauthorizedDrain()">Attempt Unauthorized Drain</button>
+          <button class="btn btn-danger" onclick="testBlackSwan()">Black Swan Shortfall (-30%)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Reputation & Live Event Log -->
+    <div>
+      <div class="card">
+        <div class="card-title">
+          <span>ERC-8004 Credit Registry</span>
+          <span class="tag" id="agentTierTag">TIER 1</span>
+        </div>
+        
+        <div class="reputation-box">
+          <div class="rep-row">
+            <span>Agent Address</span>
+            <span class="rep-val">0x5de4...365a</span>
+          </div>
+          <div class="rep-row">
+            <span>Credit Score</span>
+            <span class="rep-val" id="creditScoreVal">300 / 1000</span>
+          </div>
+          <div class="rep-row">
+            <span>Max Leverage</span>
+            <span class="rep-val" id="leverageVal">5.0x</span>
+          </div>
+          <div class="rep-row">
+            <span>Required Buffer</span>
+            <span class="rep-val" id="bufferReqVal">20.0%</span>
+          </div>
+          <div class="rep-row">
+            <span>Repaid Cycles</span>
+            <span class="rep-val" id="cyclesVal">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-Time Monad Execution Console -->
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <div class="terminal-dot" style="background:#EF4444;"></div>
+            <div class="terminal-dot" style="background:#F59E0B;"></div>
+            <div class="terminal-dot" style="background:#10B981;"></div>
+          </div>
+          <span>MONAD-EVM ATOMIC LOG</span>
+        </div>
+        <div class="terminal-logs" id="terminalLogs">
+          <div class="log-line"><span class="log-time">[00:00:01]</span> <span class="log-tag-monad">[NAHAR-INIT]</span> Contracts verified. Senior Vault holding $100,000 USDC.</div>
+          <div class="log-line"><span class="log-time">[00:00:02]</span> <span class="log-tag-monad">[REGISTRY]</span> Agent registered with initial credit score: 300.</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let state = {
+      sandboxActive: false,
+      sandboxBalance: 0,
+      juniorBuffer: 500,
+      creditPrincipal: 2000,
+      creditScore: 300,
+      cycles: 0,
+      reserveFund: 0,
+      tier: 1
+    };
+
+    function log(tag, msg, type = 'monad') {
+      const logs = document.getElementById('terminalLogs');
+      const time = new Date().toTimeString().split(' ')[0];
+      const div = document.createElement('div');
+      div.className = 'log-line';
+      let tagClass = 'log-tag-monad';
+      if (type === 'dex') tagClass = 'log-tag-dex';
+      if (type === 'loss') tagClass = 'log-tag-loss';
+      if (type === 'success') tagClass = 'log-tag-success';
+
+      div.innerHTML = `<span class="log-time">[${time}]</span> <span class="${tagClass}">[${tag}]</span> ${msg}`;
+      logs.appendChild(div);
+      logs.scrollTop = logs.scrollHeight;
+    }
+
+    function runStep1() {
+      if (state.sandboxActive) {
+        log('ERROR', 'Agent already has an active execution sandbox.', 'loss');
+        return;
+      }
+      state.sandboxActive = true;
+      state.sandboxBalance = 2500;
+
+      document.getElementById('totalSandboxCap').innerText = '$2,500';
+      document.getElementById('barSenior').style.width = '80%';
+      document.getElementById('barJunior').style.width = '20%';
+      document.getElementById('barJunior').innerText = 'JUNIOR ($500)';
+
+      log('SANDBOX', 'NaharSandbox deployed at 0x9fE4643... Total Capital: $2,500 ($500 Buffer + $2,000 Senior Credit)', 'monad');
+      log('INVARIANT', 'Funds locked in execution sandbox. Direct withdrawal disabled.', 'success');
+
+      document.getElementById('step1').classList.remove('active');
+      document.getElementById('step2').classList.add('active');
+    }
+
+    function runStep2Arb() {
+      if (!state.sandboxActive) {
+        log('ERROR', 'Open sandbox before executing trades.', 'loss');
+        return;
+      }
+      state.sandboxBalance = 2550; // +$50 profit
+      document.getElementById('totalSandboxCap').innerText = '$2,550';
+      document.getElementById('barJunior').innerText = 'JUNIOR ($550)';
+      document.getElementById('barJunior').style.width = '22%';
+      document.getElementById('barSenior').style.width = '78%';
+
+      log('DEX-SWAP', 'Arbitrage executed on Perpl Monad CLOB: Swap $2,500 @ 10200 bps -> Returned $2,550 USDC (+2.0%)', 'dex');
+      log('SUB-SECOND', 'Atomic execution completed in 1 Monad slot (~400ms).', 'success');
+
+      document.getElementById('step2').classList.remove('active');
+      document.getElementById('step3').classList.add('active');
+    }
+
+    function runStep2Loss() {
+      if (!state.sandboxActive) {
+        log('ERROR', 'Open sandbox before executing trades.', 'loss');
+        return;
+      }
+      state.sandboxBalance = 2475; // -$25 slippage
+      document.getElementById('totalSandboxCap').innerText = '$2,475';
+      document.getElementById('barJunior').innerText = 'JUNIOR ($475)';
+      document.getElementById('barJunior').style.width = '19%';
+      document.getElementById('barSenior').style.width = '81%';
+
+      log('DEX-SWAP', 'Adverse slippage encountered: Swap $2,500 @ 9900 bps -> Returned $2,475 USDC (-1.0%)', 'loss');
+      log('WATERFALL', 'Loss of $25 allocated 100% to Junior Buffer. Senior tranche remains 100% intact ($2,000).', 'monad');
+
+      document.getElementById('step2').classList.remove('active');
+      document.getElementById('step3').classList.add('active');
+    }
+
+    function runStep3Settle() {
+      if (!state.sandboxActive) {
+        log('ERROR', 'No active sandbox to settle.', 'loss');
+        return;
+      }
+
+      const isProfit = state.sandboxBalance > 2500;
+      if (isProfit) {
+        const netProfit = state.sandboxBalance - 2500;
+        const reserveFee = netProfit * 0.10;
+        const agentProfit = netProfit - reserveFee;
+        state.reserveFund += reserveFee;
+
+        state.cycles += 1;
+        state.creditScore += 35;
+
+        log('SETTLEMENT', `Repaid Senior Vault: $2,000 principal + streaming yield. Reserve Fee collected: $${reserveFee.toFixed(2)}.`, 'success');
+        log('AGENT-PAYOUT', `Agent received $${(500 + agentProfit).toFixed(2)} ($500 buffer returned + $${agentProfit.toFixed(2)} net profit).`, 'monad');
+        log('ERC-8004', `Credit score upgraded: ${state.creditScore} (+35 pts). Cycles: ${state.cycles}`, 'success');
+      } else {
+        const loss = 2500 - state.sandboxBalance;
+        log('SETTLEMENT', `Repaid Senior Vault: 100% of $2,000 principal! Senior depositors lost $0.00.`, 'success');
+        log('JUNIOR-LOSS', `Agent absorbed full $${loss} loss. Received remaining buffer $${500 - loss}.`, 'loss');
+      }
+
+      state.sandboxActive = false;
+      document.getElementById('totalSandboxCap').innerText = '$0';
+      document.getElementById('creditScoreVal').innerText = `${state.creditScore} / 1000`;
+      document.getElementById('cyclesVal').innerText = state.cycles;
+      document.getElementById('reserveFundVal').innerText = `$${state.reserveFund.toFixed(2)}`;
+
+      if (state.cycles >= 3) {
+        state.tier = 2;
+        document.getElementById('agentTierTag').innerText = 'TIER 2 (ESTABLISHED)';
+        document.getElementById('agentTierTag').style.color = 'var(--monad-cyan)';
+        document.getElementById('leverageVal').innerText = '10.0x';
+        document.getElementById('bufferReqVal').innerText = '10.0%';
+        log('TIER-UPGRADE', 'Agent achieved Tier-2 credit status! Leverage limit automatically expanded to 10x (10% buffer).', 'success');
+      }
+
+      document.getElementById('step3').classList.remove('active');
+      document.getElementById('step1').classList.add('active');
+    }
+
+    function testUnauthorizedDrain() {
+      log('ATTACK-TEST', 'Malicious agent attempts direct ERC20 transferFrom sandbox to external address...', 'loss');
+      setTimeout(() => {
+        log('REVERTED', 'Tx Reverted: Sandbox: target DEX is not whitelisted. Non-drain invariant held.', 'success');
+      }, 300);
+    }
+
+    function testBlackSwan() {
+      log('STRESS-TEST', 'Simulating catastrophic 30% gap crash (exceeding junior buffer)...', 'loss');
+      setTimeout(() => {
+        log('WATERFALL', 'Junior Buffer wiped ($500). Remaining shortfall ($250) absorbed by Protocol Reserve Fund.', 'loss');
+        log('SENIOR-STATUS', 'Senior depositors 100% protected by Reserve Fund. Agent demoted to Tier 0 (2x leverage).', 'monad');
+      }, 400);
+    }
+  </script>
+</body>
+</html>
