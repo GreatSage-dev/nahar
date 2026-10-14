@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NAHAR Prime // Institutional AI Agent Prime Broker Terminal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07080D;
+      --panel-bg: #0D0F18;
+      --card-bg: #131622;
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-border-active: rgba(0, 245, 212, 0.4);
+      --monad-purple: #836EF9;
+      --monad-cyan: #00F5D4;
+      --monad-emerald: #10B981;
+      --monad-amber: #F59E0B;
+      --monad-red: #EF4444;
+      --text: #F9FAFB;
+      --text-muted: #9CA3AF;
+      --text-dim: #6B7280;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Terminal Navigation Bar */
+    .top-bar {
+      background: var(--panel-bg);
+      border-bottom: 1px solid var(--card-border);
+      padding: 0.85rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .top-left {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .terminal-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      font-size: 1.15rem;
+      text-decoration: none;
+      color: #FFFFFF;
+    }
+
+    .brand-cube {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, var(--monad-purple), var(--monad-cyan));
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #07080D;
+      font-weight: 900;
+      font-size: 0.95rem;
+    }
+
+    .terminal-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+      background: rgba(131, 110, 249, 0.12);
+      border: 1px solid rgba(131, 110, 249, 0.3);
+      color: var(--monad-purple);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--monad-cyan);
+      box-shadow: 0 0 8px var(--monad-cyan);
+    }
+
+    .top-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .role-toggle {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 3px;
+      display: flex;
+      gap: 2px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+    }
+
+    .role-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.35rem 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .role-btn.active {
+      background: var(--monad-purple);
+      color: #FFFFFF;
+    }
+
+    .btn-nav-back {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.82rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: color 0.2s;
+    }
+
+    .btn-nav-back:hover {
+      color: #FFFFFF;
+    }
+
+    /* 3-Column Terminal Layout */
+    .terminal-grid {
+      display: grid;
+      grid-template-columns: 340px 1fr 380px;
+      gap: 1rem;
+      padding: 1rem 1.5rem;
+      flex: 1;
+    }
+
+    .terminal-column {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .panel {
+      background: var(--panel-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 0.85rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      margin-bottom: 1rem;
+    }
+
+    .panel-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .pill-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--monad-cyan);
+    }
+
+    /* Metric Rows */
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.55rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      font-size: 0.82rem;
+    }
+
+    .metric-row:last-child {
+      border-bottom: none;
+    }
+
+    .metric-name {
+      color: var(--text-dim);
+    }
+
+    .metric-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+
+    /* Live Waterfall Bar */
+    .waterfall-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .waterfall-track {
+      height: 28px;
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+      background: rgba(255, 255, 255, 0.05);
+      margin: 0.75rem 0;
+    }
+
+    .track-sen {
+      background: #3B82F6;
+      width: 80%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #FFFFFF;
+      transition: width 0.3s ease;
+    }
+
+    .track-jun {
+      background: var(--monad-cyan);
+      color: #07080D;
+      width: 20%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      transition: width 0.3s ease;
+    }
+
+    /* Buttons & Controls */
+    button.btn-term {
+      background: var(--monad-purple);
+      color: #FFFFFF;
+      border: none;
+      padding: 0.7rem 1rem;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.82rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+
+    button.btn-term:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+    }
+
+    button.btn-term-mint {
+      background: var(--monad-cyan);
+      color: #07080D;
+    }
+
+    button.btn-term-danger {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #F87171;
+    }
+
+    button.btn-term-danger:hover {
+      background: rgba(239, 68, 68, 0.25);
+    }
+
+    /* Simulation Control Buttons */
+    .sim-selector {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+      margin: 1rem 0;
+    }
+
+    .sim-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 0.65rem 0.5rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .sim-btn.active {
+      background: rgba(0, 245, 212, 0.12);
+      border-color: var(--monad-cyan);
+      color: var(--monad-cyan);
+    }
+
+    /* Live Scrolling Terminal Event Log */
+    .event-terminal {
+      background: #040508;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.85rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.74rem;
+      height: 240px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .log-item {
+      line-height: 1.4;
+      word-break: break-all;
+    }
+
+    .log-ts {
+      color: var(--text-dim);
+    }
+
+    .log-purple { color: var(--monad-purple); font-weight: 700; }
+    .log-cyan { color: var(--monad-cyan); }
+    .log-green { color: var(--monad-emerald); }
+    .log-red { color: #F87171; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="top-bar">
+    <div class="top-left">
+      <a href="index.html" class="terminal-brand">
+        <div class="brand-cube">N</div>
+        <span>NAHAR<span style="color:var(--monad-cyan);">.</span> PRIME</span>
+      </a>
+      <div class="terminal-badge">
+        <span class="status-dot"></span>
+        <span>MONAD-EVM • 10,000 TPS • 0.4s SLOTS</span>
+      </div>
+      <div class="terminal-badge" style="border-color: rgba(0, 245, 212, 0.3); color: var(--monad-cyan);">
+        SLOT: <strong id="slotTicker" style="margin-left: 4px;">#849,219</strong>
+      </div>
+    </div>
+
+    <div class="top-right">
+      <div class="role-toggle">
+        <button class="role-btn active" id="btnRoleAgent" onclick="setRole('agent')">Agent (0x5de4...365a)</button>
+        <button class="role-btn" id="btnRoleLender" onclick="setRole('lender')">Senior LP (0x7099...79c8)</button>
+      </div>
+      <a href="index.html" class="btn-nav-back">
+        ← Overview
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Terminal 3-Column Grid -->
+  <main class="terminal-grid">
+
+    <!-- LEFT COLUMN: Senior Vault & Yield Engine -->
+    <div class="terminal-column">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Senior Lending Pool</span>
+          <span class="pill-tag">NaharVault.sol</span>
+        </div>
+
+        <div class="metric-row">
+          <span class="metric-name">Senior Deposited Cash</span>
+          <span class="metric-val" id="valSeniorCash">$100,000.00 USDC</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-name">Active Credit Borrowed</span>
+          <span class="metric-val" id="valTotalBorrowed">$2,000.00 USDC</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-name">Available Pool Liquidity</span>
+          <span class="metric-val" id="valAvailableLiq" style="color: var(--monad-cyan);">$98,000.00 USDC</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-name">First-Loss Protocol Reserve</span>
+          <span class="metric-val" id="valReserveFund" style="color: #FBBF24;">$5.00 USDC</span>
+        </div>
+
+        <div style="margin-top: 1rem; padding: 0.75rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--card-border);">
+          <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-dim); margin-bottom: 0.35rem;">
+            <span>STREAMING PER-SECOND YIELD</span>
+            <span style="color: var(--monad-emerald); font-weight: 700;">10.0% APY</span>
+          </div>
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 800; color: #FFFFFF;" id="accruedYieldVal">
+            +$0.004918 USDC
+          </div>
+          <div style="font-size: 0.68rem; color: var(--text-dim); margin-top: 2px;">
+            Accruing live per Monad block slot (~3.17e-9 / sec)
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem;">
+          <button class="btn-term" style="background: rgba(255,255,255,0.08);" onclick="actionDepositSenior()">Deposit $10k</button>
+          <button class="btn-term" style="background: rgba(255,255,255,0.08);" onclick="actionWithdrawSenior()">Withdraw $5k</button>
+        </div>
+      </div>
+
+      <!-- Invariant Shield Status -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Security Invariants</span>
+          <span class="pill-tag" style="color: var(--monad-emerald);">ENFORCED</span>
+        </div>
+
+        <div class="metric-row">
+          <span class="metric-name">Non-Drain Invariant</span>
+          <span class="metric-val" style="color: var(--monad-emerald);">LOCKED</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-name">DEX Calldata Scope</span>
+          <span class="metric-val">WHITELIST_ONLY</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-name">Post-Trade Allowance</span>
+          <span class="metric-val" style="color: var(--monad-emerald);">REVOKED (0)</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-name">Dual-Tranche Priority</span>
+          <span class="metric-val">SENIOR_FIRST</span>
+        </div>
+
+        <div style="margin-top: 1rem;">
+          <button class="btn-term btn-term-danger" style="width: 100%; font-size: 0.75rem;" onclick="testAttackDrain()">
+            Test Rogue External Drain Attempt
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER COLUMN: Active Execution Sandbox & Trading Terminal -->
+    <div class="terminal-column">
+      <div class="panel" style="flex: 1;">
+        <div class="panel-header">
+          <div>
+            <span class="panel-title">Active Execution Sandbox</span>
+            <div style="font-size: 0.7rem; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; margin-top: 3px;">
+              Sandbox: 0x9fE4643B...34AC • Agent: 0x5de4...365a
+            </div>
+          </div>
+          <span class="pill-tag" style="background: rgba(16, 185, 129, 0.15); color: var(--monad-emerald); font-weight: 700;">ACTIVE (5.0x)</span>
+        </div>
+
+        <!-- Tranche Waterfall Visualization -->
+        <div class="waterfall-box">
+          <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 0.4rem;">
+            <span>TOTAL SANDBOX ASSETS: <strong id="totalSandboxCapVal" style="color:#FFFFFF;">$2,500.00 USDC</strong></span>
+            <span>LEVERAGE: <strong id="leverageRatioVal" style="color: var(--monad-cyan);">5.0x</strong></span>
+          </div>
+
+          <div class="waterfall-track">
+            <div class="track-sen" id="trackSenior">SENIOR TRANCHE: $2,000 (80%)</div>
+            <div class="track-jun" id="trackJunior">JUNIOR: $500 (20%)</div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; font-size: 0.68rem; color: var(--text-dim);">
+            <span>Priority Claim: 100% Backstop</span>
+            <span>First-Loss Absorption: Junior Equity</span>
+          </div>
+        </div>
+
+        <!-- Orderbook CLOB Trading Execution -->
+        <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 1.1rem; margin-bottom: 1rem;">
+          <div style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.75rem;">
+            Monad CLOB Trade Forwarder
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
+            <div>
+              <div style="font-size: 0.7rem; color: var(--text-dim); margin-bottom: 4px;">TARGET DEX</div>
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; background: var(--bg); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--card-border);">
+                Perpl CLOB (0x81B...4AC)
+              </div>
+            </div>
+            <div>
+              <div style="font-size: 0.7rem; color: var(--text-dim); margin-bottom: 4px;">ORDER ROUTE</div>
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; background: var(--bg); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--card-border);">
+                Atomic Cross-Spread Swap
+              </div>
+            </div>
+          </div>
+
+          <div style="font-size: 0.7rem; color: var(--text-dim); margin-bottom: 4px;">SELECT MARKET SCENARIO</div>
+          <div class="sim-selector">
+            <div class="sim-btn active" id="btnModeArb" onclick="setTradeScenario('arb')">+2.0% Arbitrage</div>
+            <div class="sim-btn" id="btnModeSlip" onclick="setTradeScenario('slip')">-1.0% Slippage</div>
+            <div class="sim-btn" id="btnModeCrash" onclick="setTradeScenario('crash')">-30% Gap Crash</div>
+          </div>
+
+          <div style="display: flex; gap: 0.75rem;">
+            <button class="btn-term btn-term-mint" style="flex: 1;" onclick="executeTradeScenario()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+              Execute Atomic DEX Trade
+            </button>
+            <button class="btn-term" style="flex: 1;" onclick="settleAndRepayCredit()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              Settle & Repay Line
+            </button>
+          </div>
+        </div>
+
+        <!-- Terminal Execution Log -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+          <span style="font-size: 0.72rem; font-weight: 700; color: var(--text-dim);">ATOMIC MONAD TX LOG</span>
+          <span style="font-size: 0.68rem; color: var(--monad-cyan);">LATENCY: 380ms</span>
+        </div>
+        <div class="event-terminal" id="terminalLogBox">
+          <div class="log-item"><span class="log-ts">[00:00:01]</span> <span class="log-purple">[INIT]</span> NaharVault holding $100,000 USDC. NaharCreditRegistry active.</div>
+          <div class="log-item"><span class="log-ts">[00:00:02]</span> <span class="log-cyan">[SANDBOX]</span> Container 0x9fE4... active. $500 Buffer + $2,000 Credit allocated.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: ERC-8004 Credit Registry & Dossier -->
+    <div class="terminal-column">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">ERC-8004 Credit Profile</span>
+          <span class="pill-tag" id="profileTierPill" style="color: var(--monad-cyan);">TIER 1 (FRESH)</span>
+        </div>
+
+        <div style="background: var(--card-bg); border-radius: 8px; padding: 1rem; border: 1px solid var(--card-border); margin-bottom: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <span style="font-size: 0.72rem; color: var(--text-dim);">CREDIT REPUTATION SCORE</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: var(--monad-cyan); font-size: 1.1rem;" id="creditScoreVal">335 / 1000</span>
+          </div>
+          <div style="height: 6px; background: rgba(255,255,255,0.06); border-radius: 999px; overflow: hidden;">
+            <div id="creditScoreBar" style="height: 100%; width: 33.5%; background: var(--monad-cyan); border-radius: 999px; transition: width 0.3s ease;"></div>
+          </div>
+        </div>
+
+        <div class="metric-row">
+          <span class="metric-name">Agent Address</span>
+          <span class="metric-val" style="font-size: 0.75rem;">0x5de4...365a</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-name">Dynamic Leverage Frontier</span>
+          <span class="metric-val" id="profileLeverageVal" style="color: var(--monad-purple);">5.0x</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-name">Required Junior Buffer</span>
+          <span class="metric-val" id="profileBufferVal">20.0%</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-name">Successful Repaid Cycles</span>
+          <span class="metric-val" id="profileCyclesVal">1</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-name">Default Count</span>
+          <span class="metric-val" id="profileDefaultsVal">0</span>
+        </div>
+
+        <div style="margin-top: 1rem; padding: 0.85rem; background: rgba(131, 110, 249, 0.08); border: 1px solid rgba(131, 110, 249, 0.2); border-radius: 8px; font-size: 0.75rem;">
+          <div style="font-weight: 700; color: var(--monad-purple); margin-bottom: 4px;">Tier 2 Unlock Condition:</div>
+          <div style="color: var(--text-muted); line-height: 1.4;">
+            Complete <strong>3 successful cycles</strong> with score $\ge$ 400 to automatically expand leverage limit to <strong>10.0x</strong> and reduce required buffer to <strong>10%</strong>.
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Action Benchmark Tests -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Automated Benchmarks</span>
+          <span class="pill-tag">VITEST 8/8</span>
+        </div>
+
+        <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.85rem; line-height: 1.4;">
+          Run instant multi-cycle tests to witness real-time leverage expansion and loss containment.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+          <button class="btn-term" style="font-size: 0.76rem;" onclick="runMultiCycleUpgrade()">
+            Fast-Forward 3 Cycles (Unlock 10x Tier 2)
+          </button>
+          <button class="btn-term btn-term-danger" style="font-size: 0.76rem;" onclick="testBlackSwanStress()">
+            Trigger Black Swan Shortfall (Test Reserve)
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let state = {
+      seniorDeposits: 100000,
+      totalBorrowed: 2000,
+      reserveFund: 5.0,
+      sandboxBalance: 2500,
+      creditPrincipal: 2000,
+      juniorBuffer: 500,
+      scenario: 'arb', // 'arb' (+2%), 'slip' (-1%), 'crash' (-30%)
+      creditScore: 335,
+      cycles: 1,
+      defaults: 0,
+      tier: 1,
+      leverage: 5.0,
+      bufferReq: 20.0,
+      slot: 849219,
+      accruedYield: 0.004918
+    };
+
+    // Live slot and streaming yield ticker
+    setInterval(() => {
+      state.slot += 1;
+      document.getElementById('slotTicker').innerText = `#${state.slot.toLocaleString()}`;
+
+      // Streaming yield increments every second
+      state.accruedYield += 0.000317;
+      document.getElementById('accruedYieldVal').innerText = `+$${state.accruedYield.toFixed(6)} USDC`;
+    }, 400);
+
+    function log(tag, msg, color = 'cyan') {
+      const box = document.getElementById('terminalLogBox');
+      const time = new Date().toTimeString().split(' ')[0];
+      const div = document.createElement('div');
+      div.className = 'log-item';
+      let tagClass = 'log-cyan';
+      if (color === 'purple') tagClass = 'log-purple';
+      if (color === 'green') tagClass = 'log-green';
+      if (color === 'red') tagClass = 'log-red';
+
+      div.innerHTML = `<span class="log-ts">[${time}]</span> <span class="${tagClass}">[${tag}]</span> ${msg}`;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function setTradeScenario(mode) {
+      state.scenario = mode;
+      document.getElementById('btnModeArb').classList.remove('active');
+      document.getElementById('btnModeSlip').classList.remove('active');
+      document.getElementById('btnModeCrash').classList.remove('active');
+
+      if (mode === 'arb') document.getElementById('btnModeArb').classList.add('active');
+      if (mode === 'slip') document.getElementById('btnModeSlip').classList.add('active');
+      if (mode === 'crash') document.getElementById('btnModeCrash').classList.add('active');
+    }
+
+    function executeTradeScenario() {
+      if (state.scenario === 'arb') {
+        state.sandboxBalance = 2550; // +$50 profit
+        document.getElementById('totalSandboxCapVal').innerText = '$2,550.00 USDC';
+        document.getElementById('trackJunior').style.width = '22%';
+        document.getElementById('trackJunior').innerText = 'JUNIOR: $550 (+50)';
+        document.getElementById('trackSenior').style.width = '78%';
+
+        log('DEX-TRADE', 'Swap $2,500 USDC on Perpl CLOB @ 10200 bps -> Returned $2,550.00 USDC (+2.0%)', 'green');
+        log('SLOT-CONFIRM', 'Single-slot fill completed in 380ms. Allowance reset to 0.', 'purple');
+      } else if (state.scenario === 'slip') {
+        state.sandboxBalance = 2475; // -$25 slippage
+        document.getElementById('totalSandboxCapVal').innerText = '$2,475.00 USDC';
+        document.getElementById('trackJunior').style.width = '19%';
+        document.getElementById('trackJunior').innerText = 'JUNIOR: $475 (-25)';
+        document.getElementById('trackSenior').style.width = '81%';
+
+        log('DEX-TRADE', 'Adverse slippage on Kuru AMM: Swap $2,500 USDC @ 9900 bps -> Returned $2,475.00 USDC (-1.0%)', 'red');
+        log('WATERFALL', 'Loss ($25.00) assigned 100% to Junior Buffer. Senior tranche safe at $2,000.', 'cyan');
+      } else if (state.scenario === 'crash') {
+        state.sandboxBalance = 1750; // -$750 crash (Principal owed $2,000, Shortfall $250)
+        document.getElementById('totalSandboxCapVal').innerText = '$1,750.00 USDC';
+        document.getElementById('trackJunior').style.width = '0%';
+        document.getElementById('trackJunior').innerText = 'WIPED';
+        document.getElementById('trackSenior').style.width = '100%';
+        document.getElementById('trackSenior').innerText = 'SENIOR: $1,750 (-250 Shortfall)';
+
+        log('CRASH-EVENT', 'Catastrophic 30% gap crash on DEX. Position value: $1,750 USDC.', 'red');
+        log('WATERFALL', 'Junior Buffer wiped ($500). Remaining shortfall ($250) backstopped by Protocol Reserve.', 'red');
+      }
+    }
+
+    function settleAndRepayCredit() {
+      if (state.sandboxBalance >= 2500) {
+        // Profitable
+        const netProfit = state.sandboxBalance - 2500;
+        const reserveFee = netProfit * 0.10;
+        const agentProfit = netProfit - reserveFee;
+
+        state.reserveFund += reserveFee;
+        state.creditScore += 35;
+        state.cycles += 1;
+
+        log('SETTLE', `Senior Vault repaid $2,000 principal + yield. Reserve augmented by $${reserveFee.toFixed(2)}.`, 'green');
+        log('AGENT-PAYOUT', `Agent received $${(500 + agentProfit).toFixed(2)} ($500 buffer + $${agentProfit.toFixed(2)} profit).`, 'cyan');
+        log('ERC-8004', `Credit Score upgraded: ${state.creditScore} (+35 pts). Cycles: ${state.cycles}`, 'purple');
+      } else if (state.sandboxBalance >= 2000) {
+        // Mild loss
+        const loss = 2500 - state.sandboxBalance;
+        log('SETTLE', `Senior Vault repaid 100% of $2,000.00 principal! Senior depositor loss: $0.00.`, 'green');
+        log('BUFFER-LOSS', `Agent Junior Buffer absorbed full $${loss.toFixed(2)} loss. Returned remaining $${(500 - loss).toFixed(2)}.`, 'red');
+      } else {
+        // Shortfall
+        const shortfall = 2000 - state.sandboxBalance;
+        log('SETTLE', `All remaining $${state.sandboxBalance} transferred to Vault. Shortfall: $${shortfall}.`, 'red');
+        log('RESERVE-ABSORB', `Protocol Reserve Fund absorbed $${shortfall} shortfall to protect depositors.`, 'purple');
+        state.defaults += 1;
+        state.creditScore = Math.max(50, state.creditScore - 200);
+        state.leverage = 2.0;
+        document.getElementById('profileDefaultsVal').innerText = state.defaults;
+        document.getElementById('profileTierPill').innerText = 'TIER 0 (PENALIZED)';
+        document.getElementById('profileTierPill').style.color = '#EF4444';
+      }
+
+      // Reset sandbox UI
+      state.sandboxBalance = 2500;
+      document.getElementById('totalSandboxCapVal').innerText = '$2,500.00 USDC';
+      document.getElementById('trackJunior').style.width = '20%';
+      document.getElementById('trackJunior').innerText = 'JUNIOR: $500 (20%)';
+      document.getElementById('trackSenior').style.width = '80%';
+      document.getElementById('trackSenior').innerText = 'SENIOR TRANCHE: $2,000 (80%)';
+
+      document.getElementById('valReserveFund').innerText = `$${state.reserveFund.toFixed(2)} USDC`;
+      document.getElementById('creditScoreVal').innerText = `${state.creditScore} / 1000`;
+      document.getElementById('creditScoreBar').style.width = `${Math.min(100, state.creditScore / 10)}%`;
+      document.getElementById('profileCyclesVal').innerText = state.cycles;
+      document.getElementById('profileLeverageVal').innerText = `${state.leverage.toFixed(1)}x`;
+
+      checkTierProgression();
+    }
+
+    function checkTierProgression() {
+      if (state.cycles >= 3 && state.creditScore >= 400 && state.defaults === 0) {
+        state.tier = 2;
+        state.leverage = 10.0;
+        state.bufferReq = 10.0;
+        document.getElementById('profileTierPill').innerText = 'TIER 2 (ESTABLISHED)';
+        document.getElementById('profileTierPill').style.color = 'var(--monad-cyan)';
+        document.getElementById('profileLeverageVal').innerText = '10.0x';
+        document.getElementById('profileBufferVal').innerText = '10.0%';
+        document.getElementById('leverageRatioVal').innerText = '10.0x';
+        log('TIER-UPGRADE', 'Agent achieved Tier-2 credit status! Leverage limit automatically upgraded to 10.0x (10% buffer).', 'green');
+      }
+    }
+
+    function testAttackDrain() {
+      log('ATTACK-SIM', 'Rogue agent attempts direct ERC20 transferFrom sandbox to attacker wallet (0x7c85...dd60)...', 'red');
+      setTimeout(() => {
+        log('REVERTED', 'Tx Reverted: Sandbox: target DEX is not whitelisted. Non-drain invariant held.', 'green');
+      }, 350);
+    }
+
+    function runMultiCycleUpgrade() {
+      log('BENCHMARK', 'Simulating 3 consecutive profitable cycles on Monad CLOB...', 'purple');
+      for (let i = 0; i < 3; i++) {
+        state.cycles += 1;
+        state.creditScore += 35;
+        state.reserveFund += 5.0;
+      }
+      checkTierProgression();
+      document.getElementById('creditScoreVal').innerText = `${state.creditScore} / 1000`;
+      document.getElementById('creditScoreBar').style.width = `${Math.min(100, state.creditScore / 10)}%`;
+      document.getElementById('profileCyclesVal').innerText = state.cycles;
+      document.getElementById('valReserveFund').innerText = `$${state.reserveFund.toFixed(2)} USDC`;
+    }
+
+    function testBlackSwanStress() {
+      setTradeScenario('crash');
+      executeTradeScenario();
+      setTimeout(() => {
+        settleAndRepayCredit();
+      }, 500);
+    }
+
+    function actionDepositSenior() {
+      state.seniorDeposits += 10000;
+      document.getElementById('valSeniorCash').innerText = `$${state.seniorDeposits.toLocaleString()}.00 USDC`;
+      document.getElementById('valAvailableLiq').innerText = `$${(state.seniorDeposits - state.totalBorrowed).toLocaleString()}.00 USDC`;
+      log('DEPOSIT', 'Senior depositor added $10,000 USDC liquidity to NaharVault.', 'green');
+    }
+
+    function actionWithdrawSenior() {
+      if (state.seniorDeposits > 10000) {
+        state.seniorDeposits -= 5000;
+        document.getElementById('valSeniorCash').innerText = `$${state.seniorDeposits.toLocaleString()}.00 USDC`;
+        document.getElementById('valAvailableLiq').innerText = `$${(state.seniorDeposits - state.totalBorrowed).toLocaleString()}.00 USDC`;
+        log('WITHDRAW', 'Senior depositor withdrew $5,000 USDC principal + yield.', 'cyan');
+      }
+    }
+
+    function setRole(role) {
+      if (role === 'agent') {
+        document.getElementById('btnRoleAgent').classList.add('active');
+        document.getElementById('btnRoleLender').classList.remove('active');
+        log('ROLE', 'Active viewpoint: Autonomous Trading Agent (0x5de4...365a)', 'cyan');
+      } else {
+        document.getElementById('btnRoleLender').classList.add('active');
+        document.getElementById('btnRoleAgent').classList.remove('active');
+        log('ROLE', 'Active viewpoint: Senior Liquidity Depositor (0x7099...79c8)', 'purple');
+      }
+    }
+  </script>
+</body>
+</html>

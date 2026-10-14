@@ -207,24 +207,87 @@
     .avatar-cluster {
       display: flex;
       justify-content: center;
+    /* Agent Node Cluster in Hero */
+    .agent-node-cluster {
+      display: flex;
+      justify-content: center;
       align-items: center;
       margin-bottom: 1.5rem;
+      gap: 0.65rem;
     }
 
-    .avatar-cluster .avatar-item {
-      width: 44px;
-      height: 44px;
+    .agent-badge-node {
+      width: 46px;
+      height: 46px;
       border-radius: 50%;
-      border: 3px solid #FFFFFF;
-      background-size: cover;
-      background-position: center;
-      margin-left: -10px;
+      background: #FFFFFF;
+      border: 2px solid rgba(16, 185, 129, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       position: relative;
-      box-shadow: var(--shadow-sm);
+      box-shadow: 0 4px 12px rgba(4, 62, 53, 0.08);
+      transition: all 0.2s ease;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.15rem;
+      cursor: default;
     }
 
-    .avatar-cluster .avatar-item:first-child {
-      margin-left: 0;
+    .agent-badge-node:hover {
+      transform: translateY(-2px) scale(1.06);
+      border-color: var(--accent-mint);
+      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.22);
+    }
+
+    .node-alpha { color: #043E35; background: linear-gradient(135deg, #FFFFFF 0%, #D1FAE5 100%); }
+    .node-omega { color: #0D9488; background: linear-gradient(135deg, #FFFFFF 0%, #CCFBF1 100%); }
+    .node-sigma { color: #7C3AED; background: linear-gradient(135deg, #FFFFFF 0%, #EDE9FE 100%); }
+    .node-lambda { color: #2563EB; background: linear-gradient(135deg, #FFFFFF 0%, #DBEAFE 100%); }
+
+    .status-dot-pulse {
+      position: absolute;
+      top: 1px;
+      right: 1px;
+      width: 9px;
+      height: 9px;
+      background: #10B981;
+      border-radius: 50%;
+      border: 2px solid #FFFFFF;
+      box-shadow: 0 0 6px #10B981;
+    }
+
+    /* Quant Desk Operator Cards */
+    .quant-telemetry-box {
+      height: 220px;
+      background: #081B16;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      color: #FFFFFF;
+      font-family: 'JetBrains Mono', monospace;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .telemetry-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .telemetry-val {
+      font-weight: 700;
+      color: #00F5D4;
+    }
+
+    .telemetry-chart-svg {
+      width: 100%;
+      height: 80px;
+      margin: 0.5rem 0;
     }
 
     .hero h1 {
@@ -1201,7 +1264,7 @@
 
       <div class="nav-actions">
         <a href="#demo" class="btn-login">View Docs</a>
-        <a href="#demo" class="btn-primary">
+        <a href="console.html" class="btn-primary">
           Launch App
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -1250,12 +1313,24 @@
       <span>Introducing Nahar Prime • Undercollateralized Multi-Block Credit on Monad</span>
     </div>
 
-    <!-- Avatar Cluster -->
-    <div class="avatar-cluster">
-      <div class="avatar-item" style="background-image: url('https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80');"></div>
-      <div class="avatar-item" style="background-image: url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80');"></div>
-      <div class="avatar-item" style="background-image: url('https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=120&q=80');"></div>
-      <div class="avatar-item" style="background-image: url('https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80');"></div>
+    <!-- Agent Node Cluster -->
+    <div class="agent-node-cluster">
+      <div class="agent-badge-node node-alpha" title="Agent-Alpha (0x5de4...365a) • Arbitrage Engine">
+        α
+        <span class="status-dot-pulse"></span>
+      </div>
+      <div class="agent-badge-node node-omega" title="Agent-Omega (0x3c44...93bc) • CLOB Market Maker">
+        Ω
+        <span class="status-dot-pulse"></span>
+      </div>
+      <div class="agent-badge-node node-sigma" title="Agent-Sigma (0x90f7...b906) • Statistical Arbitrage">
+        Σ
+        <span class="status-dot-pulse"></span>
+      </div>
+      <div class="agent-badge-node node-lambda" title="Agent-Lambda (0x15d3...6a65) • Sub-Second Liquidator">
+        λ
+        <span class="status-dot-pulse"></span>
+      </div>
     </div>
 
     <!-- Main Headline -->
@@ -1267,16 +1342,22 @@
 
     <!-- Hero CTA Buttons -->
     <div class="hero-cta-group">
-      <a href="#demo" class="btn-primary" style="padding: 0.85rem 1.8rem; font-size: 0.98rem;">
+      <a href="console.html" class="btn-primary" style="padding: 0.85rem 1.8rem; font-size: 0.98rem;">
         Open Execution Sandbox
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <line x1="5" y1="12" x2="19" y2="12"></line>
           <polyline points="12 5 19 12 12 19"></polyline>
         </svg>
       </a>
-      <a href="#demo" class="btn-secondary" style="padding: 0.85rem 1.8rem; font-size: 0.98rem;">
-        View Verified Test Proofs (8/8) ↗
+      <a href="console.html" class="btn-secondary" style="padding: 0.85rem 1.8rem; font-size: 0.98rem;">
+        Launch Prime Console ↗
       </a>
+    </div>
+
+    <!-- 3D Prime Broker Node Showcase -->
+    <div style="max-width: 540px; margin: 0 auto 2rem; position: relative;">
+      <div style="position: absolute; inset: -20px; background: radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, transparent 70%); filter: blur(25px); z-index: 0;"></div>
+      <img src="assets/prime_broker_node.jpg" alt="NAHAR Prime Autonomous Broker Node" style="width: 100%; height: auto; border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.25); box-shadow: 0 24px 60px -12px rgba(4, 62, 53, 0.16); position: relative; z-index: 1;">
     </div>
   </section>
 
@@ -1372,7 +1453,7 @@
           </div>
 
           <div class="tree-root-box">
-            <div class="tree-root-avatar" style="background-image: url('https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&q=80');"></div>
+            <div class="tree-root-avatar" style="background: var(--primary-emerald); color: var(--accent-mint); display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 0.75rem; border-radius: 50%;">α</div>
             <div>
               <div style="font-size: 0.76rem; font-weight: 700; color: #043E35;">Monad CLOB Arbitrage</div>
               <div style="font-size: 0.65rem; color: #9CA3AF; font-family: 'JetBrains Mono', monospace;">$2,000 Senior Credit • Verified</div>
@@ -1493,7 +1574,7 @@
               <div class="grow-profile-top"></div>
               <div class="grow-profile-body">
                 <div class="grow-user-row">
-                  <div class="grow-avatar" style="background-image: url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=80&q=80');"></div>
+                  <div class="grow-avatar" style="background: var(--primary-emerald); color: var(--accent-mint); display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 0.85rem; border-radius: 50%; border: 1.5px solid var(--accent-mint);">Ω</div>
                   <div>
                     <div style="font-size: 0.82rem; font-weight: 700; color: #043E35;">Autonomous MM #412</div>
                     <div style="font-size: 0.7rem; color: #10B981; font-weight: 600;">Tier 3 Elite Market Maker</div>
@@ -1605,44 +1686,85 @@
     </div>
 
     <div class="operator-cards-grid">
-      <!-- Card 1 -->
+      <!-- Card 1: AlphaLoop Quant -->
       <div class="operator-card">
-        <div class="operator-photo" style="background-image: url('https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80');"></div>
+        <div class="quant-telemetry-box">
+          <div class="telemetry-row">
+            <span>ALPHALOOP_QUANT</span>
+            <span class="telemetry-val">0.38s LATENCY</span>
+          </div>
+          <svg class="telemetry-chart-svg" viewBox="0 0 160 50" fill="none">
+            <path d="M0 40 Q 30 10, 60 25 T 120 15 T 160 8" stroke="#10B981" stroke-width="2" fill="none"/>
+            <path d="M0 40 Q 30 10, 60 25 T 120 15 T 160 8 L 160 50 L 0 50 Z" fill="rgba(16, 185, 129, 0.15)"/>
+          </svg>
+          <div class="telemetry-row">
+            <span>24H VOLUME</span>
+            <span class="telemetry-val">$4.2M USDC</span>
+          </div>
+        </div>
         <div class="operator-info">
-          <div class="operator-name">Elena Rostova</div>
-          <div class="operator-role">Lead Quant • Jump Monad Desk</div>
+          <div class="operator-name">AlphaLoop Quant Cluster</div>
+          <div class="operator-role">Cross-Venue Arbitrage Desk • Monad</div>
         </div>
       </div>
 
-      <!-- Featured Active Card 2 (Dark Emerald) -->
+      <!-- Featured Active Card 2 (Dark Emerald): FlowState Autonomous MM -->
       <div class="operator-card featured-card">
         <div class="quote-text">
-          "NAHAR transformed our autonomous arbitrage bot from a capital-constrained toy script into an institutional-grade market maker on Monad. The dual-tranche junior buffer guarantees our depositors are never exposed to liquidation slippage."
+          "NAHAR gives our autonomous market maker institutional credit power on Monad. By isolating risk inside execution sandboxes backed by our 10% junior buffer, our strategy scales across thousands of orderbook updates without ever exposing senior depositors to liquidation slippage."
         </div>
         <div class="quote-author">
-          <div class="author-avatar" style="background-image: url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80');"></div>
+          <div class="author-avatar" style="background: var(--primary-emerald); border: 2px solid var(--accent-mint); display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 1.15rem; color: var(--accent-mint);">
+            Ω
+          </div>
           <div>
-            <div class="author-name">David Zhao</div>
-            <div class="author-title">AI Agent Architect • Flow Capital</div>
+            <div class="author-name">FlowState-Genesis MM</div>
+            <div class="author-title">ERC-8004 Verified Node • Token ID #8492</div>
           </div>
         </div>
       </div>
 
-      <!-- Card 3 -->
+      <!-- Card 3: Vortex Liquidations -->
       <div class="operator-card">
-        <div class="operator-photo" style="background-image: url('https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80');"></div>
+        <div class="quant-telemetry-box">
+          <div class="telemetry-row">
+            <span>VORTEX_MEV</span>
+            <span class="telemetry-val">99.98% INCLUSION</span>
+          </div>
+          <svg class="telemetry-chart-svg" viewBox="0 0 160 50" fill="none">
+            <path d="M0 45 L 30 35 L 70 38 L 100 12 L 130 18 L 160 5" stroke="#3B82F6" stroke-width="2" fill="none"/>
+            <path d="M0 45 L 30 35 L 70 38 L 100 12 L 130 18 L 160 5 L 160 50 L 0 50 Z" fill="rgba(59, 130, 246, 0.15)"/>
+          </svg>
+          <div class="telemetry-row">
+            <span>MAX LEVERAGE</span>
+            <span class="telemetry-val">18.5x TIER 3</span>
+          </div>
+        </div>
         <div class="operator-info">
-          <div class="operator-name">Marcus Vance</div>
-          <div class="operator-role">Risk Officer • Sovereign Vault</div>
+          <div class="operator-name">Vortex Searcher Engine</div>
+          <div class="operator-role">Atomic Liquidator • Monad Slots</div>
         </div>
       </div>
 
-      <!-- Card 4 -->
+      <!-- Card 4: Sovereign Liquidity Vault -->
       <div class="operator-card">
-        <div class="operator-photo" style="background-image: url('https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80');"></div>
+        <div class="quant-telemetry-box">
+          <div class="telemetry-row">
+            <span>SOVEREIGN_LP</span>
+            <span class="telemetry-val">100% SOLVENT</span>
+          </div>
+          <svg class="telemetry-chart-svg" viewBox="0 0 160 50" fill="none">
+            <path d="M0 35 L 40 32 L 80 25 L 120 18 L 160 10" stroke="#8B5CF6" stroke-width="2" fill="none"/>
+            <path d="M0 35 L 40 32 L 80 25 L 120 18 L 160 10 L 160 50 L 0 50 Z" fill="rgba(139, 92, 246, 0.15)"/>
+          </svg>
+          <div class="telemetry-row">
+            <span>POOL DEPOSITS</span>
+            <span class="telemetry-val">$100,000 USDC</span>
+          </div>
+        </div>
         <div class="operator-info">
-          <div class="operator-name">Sarah Lin</div>
-          <div class="operator-role">Founder • Nexus Trading</div>
+          <div class="operator-name">Sovereign Prime Vault</div>
+          <div class="operator-role">Senior Depositor • Priority Claim</div>
         </div>
       </div>
     </div>
