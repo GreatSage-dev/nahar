@@ -1,0 +1,21 @@
+{
+  "network": "Monad Testnet",
+  "chainId": 10143,
+  "rpcUrl": "https://testnet-rpc.monad.xyz",
+  "explorer": "https://testnet.monadscan.com",
+  "contracts": {
+    "baseToken": "0x36e1555e5585442305d1a9e3326e0dd59de3ba22",
+    "creditRegistry": "0xeb40c6c6921d5f0504f533b89bdfb63e89964dab",
+    "vault": "0xeb8794fa34a83d56f2b62235f91a57e1a6e3b5fc",
+    "mockDex": "0xf8b867acde0a45b4b2e83712e8fd4470a1797ac8",
+    "activeSandbox": "0x6eaB8ad3703355d12f3Db90631f0BCe0a4d1A3Cf"
+  },
+  "explorerUrls": {
+    "vault": "https://testnet.monadscan.com/address/0xeb8794fa34a83d56f2b62235f91a57e1a6e3b5fc",
+    "sandbox": "https://testnet.monadscan.com/address/0x6eaB8ad3703355d12f3Db90631f0BCe0a4d1A3Cf",
+    "creditRegistry": "https://testnet.monadscan.com/address/0xeb40c6c6921d5f0504f533b89bdfb63e89964dab",
+    "mockDex": "https://testnet.monadscan.com/address/0xf8b867acde0a45b4b2e83712e8fd4470a1797ac8",
+    "baseToken": "https://testnet.monadscan.com/address/0x36e1555e5585442305d1a9e3326e0dd59de3ba22"
+  },
+  "deployedAt": "2026-10-14T02:44:24.074Z"
+}

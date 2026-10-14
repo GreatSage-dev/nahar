@@ -5,6 +5,20 @@
 
 ---
 
+### 🌐 Official Monad Testnet Deployments (Chain ID: 10143)
+
+NAHAR smart contracts are deployed live and verified on the official **Monad Testnet**:
+
+| Contract | Address | MonadScan Explorer |
+| :--- | :--- | :--- |
+| **NaharVault** (Senior Pool & Reserve) | `0xeb8794fa34a83d56f2b62235f91a57e1a6e3b5fc` | [View on MonadScan](https://testnet.monadscan.com/address/0xeb8794fa34a83d56f2b62235f91a57e1a6e3b5fc) |
+| **NaharSandbox** (Execution Container) | `0x6eaB8ad3703355d12f3Db90631f0BCe0a4d1A3Cf` | [View on MonadScan](https://testnet.monadscan.com/address/0x6eaB8ad3703355d12f3Db90631f0BCe0a4d1A3Cf) |
+| **NaharCreditRegistry** (ERC-8004) | `0xeb40c6c6921d5f0504f533b89bdfb63e89964dab` | [View on MonadScan](https://testnet.monadscan.com/address/0xeb40c6c6921d5f0504f533b89bdfb63e89964dab) |
+| **MockDEX** (Perpl/Kuru CLOB Router) | `0xf8b867acde0a45b4b2e83712e8fd4470a1797ac8` | [View on MonadScan](https://testnet.monadscan.com/address/0xf8b867acde0a45b4b2e83712e8fd4470a1797ac8) |
+| **MockERC20** (Test USDC Token) | `0x36e1555e5585442305d1a9e3326e0dd59de3ba22` | [View on MonadScan](https://testnet.monadscan.com/address/0x36e1555e5585442305d1a9e3326e0dd59de3ba22) |
+
+---
+
 ## 1. Executive Summary & The Jump Quant Thesis
 
 Autonomous trading agents are rapidly becoming the dominant market participants in DeFi. On high-throughput networks like **Monad** (10,000 TPS, 1-second block finality), agents discover fleeting cross-DEX arbitrage, statistical arbitrage, and liquidations. 
