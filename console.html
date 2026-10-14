@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NAHAR Prime // Institutional AI Agent Prime Brokerage Workstation</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="assets/ethers.umd.min.js"></script>
   <style>
     :root {
       --bg: #F8FAF9;
@@ -883,7 +883,7 @@
     <div class="facility-tab-bar">
       <button class="tab-btn active" id="tabBtn-sandbox" onclick="switchWorkstationTab('sandbox')">
         <span>Isolated Execution Sandbox</span>
-        <span class="tab-badge">0x9fE4...34AC</span>
+        <span class="tab-badge" id="tabBadgeSandbox">0xDFBF...44f8</span>
       </button>
       <button class="tab-btn" id="tabBtn-waterfall" onclick="switchWorkstationTab('waterfall')">
         <span>Dual-Tranche Waterfall Ledger</span>
@@ -925,7 +925,7 @@
             <div class="spec-grid">
               <div>
                 <div class="spec-cell-label">Sandbox Contract</div>
-                <div class="spec-cell-val">0x9fE4643B...34AC</div>
+                <div class="spec-cell-val" id="specSandboxAddress">0xDFBF...44f8</div>
               </div>
               <div>
                 <div class="spec-cell-label">Permitted Target DEX</div>
@@ -1352,19 +1352,226 @@
       leverage: 5.0,
       bufferReq: 20.0,
       selectedRoute: 'arb', // 'arb', 'slip', 'crash'
-      slot: 849219,
+      blockNumber: 385,
       accruedYield: 0.004918,
-      healthFactor: 1.25
+      healthFactor: 1.25,
+      isOnChain: false
     };
 
-    // Live slot and continuous streaming yield ticker
-    setInterval(() => {
-      state.slot += 1;
-      document.getElementById('slotTicker').innerText = `#${state.slot.toLocaleString()}`;
+    let deployment = null;
+    let provider = null;
+    let agentSigner = null;
+    let lenderSigner = null;
+    let ownerSigner = null;
 
-      state.accruedYield += 0.000317;
-      document.getElementById('stripYieldAccrued').innerText = `+$${state.accruedYield.toFixed(6)}`;
-    }, 400);
+    let baseTokenContract = null;
+    let vaultContract = null;
+    let creditRegistryContract = null;
+    let mockDexContract = null;
+    let sandboxContract = null;
+
+    const ERC20_ABI = [
+      "function name() view returns (string)",
+      "function symbol() view returns (string)",
+      "function balanceOf(address) view returns (uint256)",
+      "function approve(address spender, uint256 amount) returns (bool)",
+      "function mint(address to, uint256 amount)",
+      "function transfer(address to, uint256 amount) returns (bool)"
+    ];
+
+    const VAULT_ABI = [
+      "function totalDeposits() view returns (uint256)",
+      "function totalBorrowed() view returns (uint256)",
+      "function reserveFund() view returns (uint256)",
+      "function activeSandboxOf(address agent) view returns (address)",
+      "function deposit(uint256 amount)",
+      "function withdraw(uint256 amount)",
+      "function openSandbox(address agent, uint256 buffer) returns (address)"
+    ];
+
+    const SANDBOX_ABI = [
+      "function agent() view returns (address)",
+      "function agentJuniorBuffer() view returns (uint256)",
+      "function creditPrincipal() view returns (uint256)",
+      "function isSettled() view returns (bool)",
+      "function getInterestOwed() view returns (uint256)",
+      "function executeTrade(address targetDEX, uint256 tokenAmountToApprove, bytes tradeCalldata) returns (bytes)",
+      "function settleAndRepay()"
+    ];
+
+    const CREDIT_REGISTRY_ABI = [
+      "function getAgentProfile(address agent) view returns (tuple(bool isRegistered, uint256 creditScore, uint256 totalBorrowed, uint256 totalRepaid, uint256 netProfitGenerated, uint32 successfulCycles, uint32 defaultCount, uint16 maxLeverageMultiplier, uint16 minJuniorBufferBps, uint256 lastUpdatedTimestamp))"
+    ];
+
+    const MOCK_DEX_ABI = [
+      "function swap(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut) returns (uint256)",
+      "function setRate(uint256 _rateBps)",
+      "function exchangeRateBps() view returns (uint256)"
+    ];
+
+    async function initBlockchain() {
+      try {
+        const res = await fetch('live-deployment.json');
+        deployment = await res.json();
+
+        if (typeof ethers === 'undefined') {
+          console.warn("Ethers library not loaded yet, will retry...");
+          setTimeout(initBlockchain, 500);
+          return;
+        }
+
+        provider = new ethers.JsonRpcProvider(deployment.rpcUrl || "http://127.0.0.1:8545");
+        
+        // Ensure network responds
+        const netBlock = await provider.getBlockNumber();
+        state.blockNumber = netBlock;
+        state.isOnChain = true;
+
+        agentSigner = new ethers.Wallet(deployment.accounts.agentKey, provider);
+        lenderSigner = new ethers.Wallet(deployment.accounts.lenderKey, provider);
+        ownerSigner = new ethers.Wallet("0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80", provider);
+
+        baseTokenContract = new ethers.Contract(deployment.contracts.baseToken, ERC20_ABI, provider);
+        vaultContract = new ethers.Contract(deployment.contracts.vault, VAULT_ABI, provider);
+        creditRegistryContract = new ethers.Contract(deployment.contracts.creditRegistry, CREDIT_REGISTRY_ABI, provider);
+        mockDexContract = new ethers.Contract(deployment.contracts.mockDex, MOCK_DEX_ABI, provider);
+
+        await refreshActiveSandbox();
+        await syncOnChainState();
+
+        // Continuous sync every 1200ms
+        setInterval(syncOnChainState, 1200);
+
+        console.log("🚀 NAHAR Connected to Real Monad Local Node via ethers.js!");
+      } catch (err) {
+        console.warn("EVM node offline or unreachable, staying in reactive simulation mode:", err);
+      }
+    }
+
+    async function refreshActiveSandbox() {
+      if (!vaultContract || !deployment) return;
+      try {
+        const activeSb = await vaultContract.activeSandboxOf(deployment.accounts.agent);
+        if (activeSb && activeSb !== ethers.ZeroAddress) {
+          deployment.contracts.sandbox = activeSb;
+          sandboxContract = new ethers.Contract(activeSb, SANDBOX_ABI, provider);
+          
+          const shortAddr = `${activeSb.slice(0, 6)}...${activeSb.slice(-4)}`;
+          const badgeEl = document.getElementById('tabBadgeSandbox');
+          if (badgeEl) badgeEl.innerText = shortAddr;
+          const specEl = document.getElementById('specSandboxAddress');
+          if (specEl) specEl.innerText = activeSb;
+        }
+      } catch (err) {
+        console.warn("Could not query active sandbox:", err);
+      }
+    }
+
+    async function syncOnChainState() {
+      if (!provider) return;
+      try {
+        const blockNumber = await provider.getBlockNumber();
+        state.blockNumber = blockNumber;
+        const slotEl = document.getElementById('slotTicker');
+        if (slotEl) slotEl.innerText = `BLOCK #${blockNumber}`;
+
+        if (!sandboxContract || !deployment) return;
+
+        const [sbBal, totalDep, reserveFund, profile, interest] = await Promise.all([
+          baseTokenContract.balanceOf(sandboxContract.target),
+          vaultContract.totalDeposits(),
+          vaultContract.reserveFund(),
+          creditRegistryContract.getAgentProfile(deployment.accounts.agent),
+          sandboxContract.getInterestOwed().catch(() => 0n)
+        ]);
+
+        state.sandboxBalance = parseFloat(ethers.formatEther(sbBal));
+        state.seniorDeposits = parseFloat(ethers.formatEther(totalDep));
+        state.reserveFund = parseFloat(ethers.formatEther(reserveFund));
+        state.accruedYield = parseFloat(ethers.formatEther(interest));
+        state.creditScore = Number(profile.creditScore);
+        state.cycles = Number(profile.successfulCycles);
+        state.defaults = Number(profile.defaultCount);
+        state.leverage = Number(profile.maxLeverageMultiplier);
+
+        updateUI();
+      } catch (err) {
+        console.error("On-chain sync error:", err);
+      }
+    }
+
+    function updateUI() {
+      const totalCapEl = document.getElementById('stripTotalCap');
+      if (totalCapEl) totalCapEl.innerText = `$${state.sandboxBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+      const totalCapText = document.getElementById('totalCapLiveText');
+      if (totalCapText) totalCapText.innerText = `$${state.sandboxBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USDC`;
+
+      const juniorEquity = Math.max(0, state.sandboxBalance - 2000);
+      const juniorEl = document.getElementById('stripJuniorBuffer');
+      if (juniorEl) juniorEl.innerText = `$${juniorEquity.toFixed(2)}`;
+
+      if (state.sandboxBalance > 0) {
+        const seniorRatio = Math.min(100, Math.round((2000 / state.sandboxBalance) * 100));
+        const juniorRatio = Math.max(0, 100 - seniorRatio);
+        
+        const seniorSlice = document.getElementById('barSeniorSlice');
+        if (seniorSlice) {
+          seniorSlice.style.width = `${seniorRatio}%`;
+          seniorSlice.innerText = `SENIOR: $2,000 (${seniorRatio}%)`;
+        }
+
+        const juniorSlice = document.getElementById('barJuniorSlice');
+        if (juniorSlice) {
+          juniorSlice.style.width = `${juniorRatio}%`;
+          juniorSlice.innerText = `JUNIOR: $${juniorEquity.toFixed(0)} (${juniorRatio}%)`;
+        }
+      }
+
+      const yieldEl = document.getElementById('stripYieldAccrued');
+      if (yieldEl) yieldEl.innerText = `+$${state.accruedYield.toFixed(6)}`;
+
+      const resEl = document.getElementById('stripReserveVal');
+      if (resEl) resEl.innerText = `$${state.reserveFund.toFixed(2)}`;
+
+      const vText = document.getElementById('vaultTotalDepositsText');
+      if (vText) vText.innerText = `$${state.seniorDeposits.toLocaleString()}.00 USDC`;
+
+      const scoreText = document.getElementById('valScoreText');
+      if (scoreText) scoreText.innerText = `${state.creditScore} / 1000`;
+
+      const barEl = document.getElementById('valScoreProgressBar');
+      if (barEl) barEl.style.width = `${Math.min(100, state.creditScore / 10)}%`;
+
+      const cycEl = document.getElementById('valCyclesDossier');
+      if (cycEl) cycEl.innerText = state.cycles;
+
+      const defEl = document.getElementById('valDefaultsDossier');
+      if (defEl) defEl.innerText = state.defaults;
+
+      const levEl = document.getElementById('valLeverageDossier');
+      if (levEl) levEl.innerText = `${state.leverage.toFixed(1)}x`;
+
+      const levLive = document.getElementById('leverageLiveText');
+      if (levLive) levLive.innerText = `${state.leverage.toFixed(1)}x`;
+
+      const tierBadge = document.getElementById('badgeTierPill');
+      if (tierBadge) {
+        if (state.defaults > 0) {
+          tierBadge.innerText = 'TIER 0 (PENALIZED)';
+          tierBadge.style.background = 'var(--accent-red-soft)';
+          tierBadge.style.color = 'var(--accent-red)';
+        } else if (state.leverage >= 10) {
+          tierBadge.innerText = 'TIER 2 (ESTABLISHED)';
+          tierBadge.style.background = 'var(--accent-mint-soft)';
+          tierBadge.style.color = 'var(--accent-mint)';
+        } else {
+          tierBadge.innerText = 'TIER 1 (FRESH AGENT)';
+          tierBadge.style.background = 'var(--accent-mint-soft)';
+          tierBadge.style.color = 'var(--accent-mint)';
+        }
+      }
+    }
 
     // Switch between the 4 dedicated institutional workstation tabs
     function switchWorkstationTab(tabName) {
@@ -1389,13 +1596,16 @@
       if (mode === 'crash') document.getElementById('btnModeCrash').classList.add('active');
     }
 
-    function appendLedgerRow(action, target, inflow, outflow, lossAttr, statusClass, statusText) {
+    function appendLedgerRow(action, target, inflow, outflow, lossAttr, statusClass, statusText, blockNum, txHash) {
       const tbody = document.getElementById('ledgerTableBody');
       if (!tbody) return;
+      const bNum = blockNum ? `#${blockNum}` : `#${state.blockNumber}`;
+      const hashLabel = txHash ? `<br><span style="font-size:0.65rem; color:var(--text-muted);">${txHash.slice(0, 10)}...</span>` : '';
+      
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>#${state.slot.toLocaleString()}</td>
-        <td>${action}</td>
+        <td>${bNum}</td>
+        <td>${action} ${hashLabel}</td>
         <td>${target}</td>
         <td>${inflow}</td>
         <td>${outflow}</td>
@@ -1405,133 +1615,341 @@
       tbody.prepend(tr);
     }
 
-    function triggerExecutionRoute() {
-      if (state.selectedRoute === 'arb') {
-        state.sandboxBalance = 2550; // +$50 profit
-        document.getElementById('stripTotalCap').innerText = '$2,550.00';
-        document.getElementById('totalCapLiveText').innerText = '$2,550.00 USDC';
-        document.getElementById('barJuniorSlice').style.width = '22%';
-        document.getElementById('barJuniorSlice').innerText = 'JUNIOR: $550 (+50)';
-        document.getElementById('barSeniorSlice').style.width = '78%';
+    async function triggerExecutionRoute() {
+      const btn = document.querySelector('.btn-exec-trade');
+      const originalHTML = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="pulse-dot"></span> Submitting Tx to Monad...`;
+      }
 
-        appendLedgerRow('Perpl CLOB Swap', 'Perpl CLOB', '$2,500.00', '$2,550.00', 'None', 'text-mint', '+2.0% FILL');
-      } else if (state.selectedRoute === 'slip') {
-        state.sandboxBalance = 2475; // -$25 slippage
-        document.getElementById('stripTotalCap').innerText = '$2,475.00';
-        document.getElementById('totalCapLiveText').innerText = '$2,475.00 USDC';
-        document.getElementById('barJuniorSlice').style.width = '19%';
-        document.getElementById('barJuniorSlice').innerText = 'JUNIOR: $475 (-25)';
-        document.getElementById('barSeniorSlice').style.width = '81%';
+      try {
+        if (!state.isOnChain || !sandboxContract) {
+          fallbackSimulateExecution();
+          return;
+        }
 
-        appendLedgerRow('Kuru AMM Slippage', 'Kuru AMM', '$2,500.00', '$2,475.00', 'Junior -$25.00', 'text-amber', '-1.0% SLIP');
-      } else if (state.selectedRoute === 'crash') {
-        state.sandboxBalance = 1750; // -$750 loss
-        document.getElementById('stripTotalCap').innerText = '$1,750.00';
-        document.getElementById('totalCapLiveText').innerText = '$1,750.00 USDC';
-        document.getElementById('barJuniorSlice').style.width = '0%';
-        document.getElementById('barJuniorSlice').innerText = 'WIPED';
-        document.getElementById('barSeniorSlice').style.width = '100%';
-        document.getElementById('barSeniorSlice').innerText = 'SENIOR: $1,750 (Shortfall -$250)';
+        let rateBps = 10200;
+        let desc = "+2.0% FILL";
+        let statusClass = "text-mint";
+        let lossAttr = "None";
 
-        appendLedgerRow('Tail Crash Dislocation', 'Perpl CLOB', '$2,500.00', '$1,750.00', 'Junior -$500, Reserve -$250', 'text-red', '-30% GAP');
+        if (state.selectedRoute === 'arb') {
+          rateBps = 10200;
+          desc = "+2.0% ARB PROFIT";
+        } else if (state.selectedRoute === 'slip') {
+          rateBps = 9900;
+          desc = "-1.0% SLIPPAGE";
+          statusClass = "text-amber";
+          lossAttr = "Junior Buffer -$25.00";
+        } else if (state.selectedRoute === 'crash') {
+          rateBps = 7000;
+          desc = "-30.0% TAIL GAP";
+          statusClass = "text-red";
+          lossAttr = "Junior Wiped (-$500), Reserve Deficit (-$250)";
+        }
+
+        // Set MockDEX exchange rate
+        const setRateTx = await mockDexContract.connect(ownerSigner).setRate(rateBps);
+        await setRateTx.wait();
+
+        // Encode MockDEX.swap
+        const amountIn = ethers.parseEther("2500");
+        const minAmountOut = (amountIn * BigInt(rateBps)) / 10000n;
+        const iface = new ethers.Interface(MOCK_DEX_ABI);
+        const swapData = iface.encodeFunctionData("swap", [
+          deployment.contracts.baseToken,
+          deployment.contracts.baseToken,
+          amountIn,
+          minAmountOut
+        ]);
+
+        // Execute trade via sandbox
+        const execTx = await sandboxContract.connect(agentSigner).executeTrade(
+          deployment.contracts.mockDex,
+          amountIn,
+          swapData
+        );
+        const receipt = await execTx.wait();
+
+        await syncOnChainState();
+
+        const outflowStr = `$${state.sandboxBalance.toFixed(2)}`;
+        appendLedgerRow(
+          'Monad CLOB Swap',
+          'Perpl CLOB',
+          '$2,500.00',
+          outflowStr,
+          lossAttr,
+          statusClass,
+          desc,
+          receipt.blockNumber,
+          receipt.hash
+        );
+      } catch (err) {
+        console.error("Trade execution error:", err);
+        fallbackSimulateExecution();
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalHTML;
+        }
       }
     }
 
-    function triggerWaterfallSettlement() {
+    async function triggerWaterfallSettlement() {
+      const btn = document.querySelector('.btn-reconcile-settle');
+      const originalHTML = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="pulse-dot"></span> Settling Priority Waterfall...`;
+      }
+
+      try {
+        if (!state.isOnChain || !sandboxContract) {
+          fallbackSimulateSettlement();
+          return;
+        }
+
+        const prevBal = state.sandboxBalance;
+        const settleTx = await sandboxContract.connect(agentSigner).settleAndRepay();
+        const receipt = await settleTx.wait();
+
+        let statusText = "SETTLED (+35 pts)";
+        let statusClass = "text-mint";
+        let lossAttr = "None";
+
+        if (prevBal < 2000) {
+          statusText = "RESERVE DEFICIT COVERED";
+          statusClass = "text-red";
+          lossAttr = "Reserve Absorbed Deficit";
+        } else if (prevBal < 2500) {
+          statusText = "SENIOR 100% SAFE ($0 Loss)";
+          statusClass = "text-amber";
+          lossAttr = "Junior Buffer Absorbed Loss";
+        }
+
+        appendLedgerRow(
+          'Priority Waterfall Settlement',
+          'NaharVault.sol',
+          `$${prevBal.toFixed(2)}`,
+          '$2,000.00 Repaid',
+          lossAttr,
+          statusClass,
+          statusText,
+          receipt.blockNumber,
+          receipt.hash
+        );
+
+        // Reopen next sandbox container automatically
+        if (btn) btn.innerHTML = `<span class="pulse-dot"></span> Reopening Container...`;
+        const JUNIOR_BUFFER = ethers.parseEther("500");
+        const appTx = await baseTokenContract.connect(agentSigner).approve(deployment.contracts.vault, JUNIOR_BUFFER);
+        await appTx.wait();
+
+        const openTx = await vaultContract.connect(agentSigner).openSandbox(deployment.accounts.agent, JUNIOR_BUFFER);
+        await openTx.wait();
+
+        await refreshActiveSandbox();
+        await syncOnChainState();
+
+      } catch (err) {
+        console.error("Settlement error:", err);
+        fallbackSimulateSettlement();
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalHTML;
+        }
+      }
+    }
+
+    async function simulateDrainAttack() {
+      try {
+        if (!state.isOnChain || !sandboxContract) {
+          appendLedgerRow('Rogue Drain Attempt', 'External Wallet', '$2,500.00', '$0.00', 'None', 'text-red', 'REVERTED: Non-Drain Invariant Held');
+          return;
+        }
+
+        const rogueAddress = "0x000000000000000000000000000000000000dEaD";
+        try {
+          const tx = await sandboxContract.connect(agentSigner).executeTrade(
+            rogueAddress,
+            ethers.parseEther("2500"),
+            "0x"
+          );
+          await tx.wait();
+        } catch (revertErr) {
+          const block = await provider.getBlockNumber();
+          const reason = revertErr.reason || revertErr.shortMessage || "Sandbox: target DEX is not whitelisted";
+          appendLedgerRow(
+            'Rogue Drain Attempt',
+            'Unauthorized 0xdEaD...',
+            '$2,500.00',
+            '$0.00',
+            'None',
+            'text-red',
+            `REVERTED ON-CHAIN: "${reason}"`,
+            block
+          );
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function actionDepositSenior() {
+      try {
+        if (!state.isOnChain) {
+          state.seniorDeposits += 10000;
+          updateUI();
+          appendLedgerRow('Senior Deposit', 'NaharVault.sol', '$10,000.00', 'N/A', 'None', 'text-mint', 'DEPOSIT CONFIRMED');
+          return;
+        }
+
+        const amount = ethers.parseEther("10000");
+        const mintTx = await baseTokenContract.connect(ownerSigner).mint(deployment.accounts.lender, amount);
+        await mintTx.wait();
+        const appTx = await baseTokenContract.connect(lenderSigner).approve(deployment.contracts.vault, amount);
+        await appTx.wait();
+        const depTx = await vaultContract.connect(lenderSigner).deposit(amount);
+        const receipt = await depTx.wait();
+
+        await syncOnChainState();
+        appendLedgerRow(
+          'Senior Deposit',
+          'NaharVault.sol',
+          '+$10,000.00',
+          'N/A',
+          'None',
+          'text-mint',
+          'ON-CHAIN CONFIRMED',
+          receipt.blockNumber,
+          receipt.hash
+        );
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function actionWithdrawSenior() {
+      try {
+        if (!state.isOnChain) {
+          if (state.seniorDeposits > 10000) {
+            state.seniorDeposits -= 5000;
+            updateUI();
+            appendLedgerRow('Senior Withdrawal', 'NaharVault.sol', 'N/A', '$5,000.00', 'None', 'text-mint', 'WITHDRAW CONFIRMED');
+          }
+          return;
+        }
+
+        const amount = ethers.parseEther("5000");
+        const withTx = await vaultContract.connect(lenderSigner).withdraw(amount);
+        const receipt = await withTx.wait();
+
+        await syncOnChainState();
+        appendLedgerRow(
+          'Senior Withdrawal',
+          'NaharVault.sol',
+          'N/A',
+          '-$5,000.00',
+          'None',
+          'text-mint',
+          'ON-CHAIN CONFIRMED',
+          receipt.blockNumber,
+          receipt.hash
+        );
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function fastForwardUpgradeCycles() {
+      try {
+        if (!state.isOnChain || !sandboxContract) {
+          for (let i = 0; i < 3; i++) {
+            state.cycles += 1;
+            state.creditScore += 35;
+            state.reserveFund += 5.0;
+          }
+          if (state.cycles >= 3 && state.creditScore >= 400) {
+            state.tier = 2;
+            state.leverage = 10.0;
+            state.bufferReq = 10.0;
+          }
+          updateUI();
+          appendLedgerRow('Fast-Forward Attestation', 'NaharCreditRegistry.sol', 'N/A', 'N/A', 'None', 'text-mint', 'TIER 2 EXPANSION (10x)');
+          return;
+        }
+
+        for (let i = 0; i < 3; i++) {
+          await mockDexContract.connect(ownerSigner).setRate(10200);
+          const amountIn = ethers.parseEther("2500");
+          const iface = new ethers.Interface(MOCK_DEX_ABI);
+          const swapData = iface.encodeFunctionData("swap", [
+            deployment.contracts.baseToken,
+            deployment.contracts.baseToken,
+            amountIn,
+            amountIn
+          ]);
+          const txTrade = await sandboxContract.connect(agentSigner).executeTrade(
+            deployment.contracts.mockDex,
+            amountIn,
+            swapData
+          );
+          await txTrade.wait();
+          
+          const txSettle = await sandboxContract.connect(agentSigner).settleAndRepay();
+          await txSettle.wait();
+
+          const JUNIOR_BUFFER = ethers.parseEther("500");
+          await (await baseTokenContract.connect(agentSigner).approve(deployment.contracts.vault, JUNIOR_BUFFER)).wait();
+          await (await vaultContract.connect(agentSigner).openSandbox(deployment.accounts.agent, JUNIOR_BUFFER)).wait();
+          await refreshActiveSandbox();
+        }
+        await syncOnChainState();
+        const block = await provider.getBlockNumber();
+        appendLedgerRow('Fast-Forward 3 Cycles', 'NaharCreditRegistry.sol', 'N/A', 'N/A', 'None', 'text-mint', 'TIER 2 (10x) UNLOCKED ON-CHAIN', block);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Fallback in-memory simulation in case node is not running
+    function fallbackSimulateExecution() {
+      if (state.selectedRoute === 'arb') {
+        state.sandboxBalance = 2550;
+        appendLedgerRow('Perpl CLOB Swap', 'Perpl CLOB', '$2,500.00', '$2,550.00', 'None', 'text-mint', '+2.0% FILL');
+      } else if (state.selectedRoute === 'slip') {
+        state.sandboxBalance = 2475;
+        appendLedgerRow('Kuru AMM Slippage', 'Kuru AMM', '$2,500.00', '$2,475.00', 'Junior -$25.00', 'text-amber', '-1.0% SLIP');
+      } else if (state.selectedRoute === 'crash') {
+        state.sandboxBalance = 1750;
+        appendLedgerRow('Tail Crash Dislocation', 'Perpl CLOB', '$2,500.00', '$1,750.00', 'Junior -$500, Reserve -$250', 'text-red', '-30% GAP');
+      }
+      updateUI();
+    }
+
+    function fallbackSimulateSettlement() {
       if (state.sandboxBalance >= 2500) {
-        // Profitable
         const netProfit = state.sandboxBalance - 2500;
         const reserveFee = netProfit * 0.10;
-        const agentProfit = netProfit - reserveFee;
-
         state.reserveFund += reserveFee;
         state.creditScore += 35;
         state.cycles += 1;
-
         appendLedgerRow('Waterfall Settlement', 'NaharVault.sol', `$${state.sandboxBalance.toFixed(2)}`, '$2,000.00 + yield', 'None', 'text-mint', 'SETTLED (+35 pts)');
       } else if (state.sandboxBalance >= 2000) {
-        // Mild loss: 100% absorbed by junior
         const loss = 2500 - state.sandboxBalance;
         appendLedgerRow('Loss Waterfall Settlement', 'NaharVault.sol', `$${state.sandboxBalance.toFixed(2)}`, '$2,000.00', `Junior Buffer -$${loss.toFixed(2)}`, 'text-amber', 'SENIOR SAFE ($0 Loss)');
       } else {
-        // Severe shortfall: Reserve absorbs
         const shortfall = 2000 - state.sandboxBalance;
         state.defaults += 1;
         state.creditScore = Math.max(50, state.creditScore - 200);
         state.leverage = 2.0;
-
-        document.getElementById('badgeTierPill').innerText = 'TIER 0 (PENALIZED)';
-        document.getElementById('badgeTierPill').style.background = 'var(--accent-red-soft)';
-        document.getElementById('badgeTierPill').style.color = 'var(--accent-red)';
-
         appendLedgerRow('Default Solvency Settlement', 'Protocol Reserve', `$${state.sandboxBalance.toFixed(2)}`, '$2,000.00', `Reserve Backstop -$${shortfall.toFixed(2)}`, 'text-red', 'RESERVE DEFICIT COVERED');
       }
-
-      // Reconcile and reset UI
       state.sandboxBalance = 2500;
-      document.getElementById('stripTotalCap').innerText = '$2,500.00';
-      document.getElementById('totalCapLiveText').innerText = '$2,500.00 USDC';
-      document.getElementById('barJuniorSlice').style.width = '20%';
-      document.getElementById('barJuniorSlice').innerText = 'JUNIOR: $500 (20%)';
-      document.getElementById('barSeniorSlice').style.width = '80%';
-      document.getElementById('barSeniorSlice').innerText = 'SENIOR TRANCHE: $2,000 (80%)';
-
-      document.getElementById('stripReserveVal').innerText = `$${state.reserveFund.toFixed(2)}`;
-      document.getElementById('valScoreText').innerText = `${state.creditScore} / 1000`;
-      document.getElementById('valScoreProgressBar').style.width = `${Math.min(100, state.creditScore / 10)}%`;
-      document.getElementById('valCyclesDossier').innerText = state.cycles;
-      document.getElementById('valDefaultsDossier').innerText = state.defaults;
-      document.getElementById('valLeverageDossier').innerText = `${state.leverage.toFixed(1)}x`;
-
-      checkTierProgression();
-    }
-
-    function checkTierProgression() {
-      if (state.cycles >= 3 && state.creditScore >= 400 && state.defaults === 0) {
-        state.tier = 2;
-        state.leverage = 10.0;
-        state.bufferReq = 10.0;
-        document.getElementById('badgeTierPill').innerText = 'TIER 2 (ESTABLISHED)';
-        document.getElementById('badgeTierPill').style.background = 'var(--accent-mint-soft)';
-        document.getElementById('badgeTierPill').style.color = 'var(--accent-mint)';
-        document.getElementById('valLeverageDossier').innerText = '10.0x';
-        document.getElementById('valBufferDossier').innerText = '10.0%';
-        document.getElementById('leverageLiveText').innerText = '10.0x';
-      }
-    }
-
-    function fastForwardUpgradeCycles() {
-      for (let i = 0; i < 3; i++) {
-        state.cycles += 1;
-        state.creditScore += 35;
-        state.reserveFund += 5.0;
-      }
-      checkTierProgression();
-      document.getElementById('valScoreText').innerText = `${state.creditScore} / 1000`;
-      document.getElementById('valScoreProgressBar').style.width = `${Math.min(100, state.creditScore / 10)}%`;
-      document.getElementById('valCyclesDossier').innerText = state.cycles;
-      document.getElementById('stripReserveVal').innerText = `$${state.reserveFund.toFixed(2)}`;
-      appendLedgerRow('Fast-Forward Attestation', 'NaharCreditRegistry.sol', 'N/A', 'N/A', 'None', 'text-mint', 'TIER 2 EXPANSION (10x)');
-    }
-
-    function simulateDrainAttack() {
-      appendLedgerRow('Rogue Drain Attempt', 'External Wallet', '$2,500.00', '$0.00', 'None', 'text-red', 'REVERTED: Non-Drain Invariant Held');
-    }
-
-    function actionDepositSenior() {
-      state.seniorDeposits += 10000;
-      const vText = document.getElementById('vaultTotalDepositsText');
-      if (vText) vText.innerText = `$${state.seniorDeposits.toLocaleString()}.00 USDC`;
-      appendLedgerRow('Senior Deposit', 'NaharVault.sol', '$10,000.00', 'N/A', 'None', 'text-mint', 'DEPOSIT CONFIRMED');
-    }
-
-    function actionWithdrawSenior() {
-      if (state.seniorDeposits > 10000) {
-        state.seniorDeposits -= 5000;
-        const vText = document.getElementById('vaultTotalDepositsText');
-        if (vText) vText.innerText = `$${state.seniorDeposits.toLocaleString()}.00 USDC`;
-        appendLedgerRow('Senior Withdrawal', 'NaharVault.sol', 'N/A', '$5,000.00', 'None', 'text-mint', 'WITHDRAW CONFIRMED');
-      }
+      updateUI();
     }
 
     function setRole(role) {
@@ -1545,6 +1963,11 @@
         switchWorkstationTab('vault');
       }
     }
+
+    // Launch connection on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      initBlockchain();
+    });
   </script>
 </body>
 </html>
