@@ -1240,6 +1240,21 @@
 </head>
 <body>
 
+  <!-- Top Switcher Bar -->
+  <div style="background: #0D0F18; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 0.65rem 2.5rem; display: flex; justify-content: space-between; align-items: center; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;">
+    <div style="display: flex; align-items: center; gap: 0.75rem; color: #9CA3AF;">
+      <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #00F5D4; box-shadow: 0 0 8px #00F5D4;"></span>
+      <span style="color: #F9FAFB; font-weight: 700;">NAHAR PROTOCOL:</span>
+      <span style="color: #00F5D4;">MONAD-EVM TESTNET (0.4s SLOTS)</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <span style="color: #9CA3AF;">Institutional Agent Terminal:</span>
+      <a href="console.html" style="background: #836EF9; color: #FFFFFF; text-decoration: none; padding: 0.35rem 0.95rem; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 0.4rem; box-shadow: 0 4px 12px rgba(131, 110, 249, 0.3);">
+        ⚡ Launch Prime Trading Console ↗
+      </a>
+    </div>
+  </div>
+
   <!-- Top Navigation -->
   <header>
     <div class="nav-inner">
@@ -2011,5 +2026,11 @@
       }
     }
   </script>
+
+  <!-- Floating Console Quick Launcher -->
+  <a href="console.html" style="position: fixed; bottom: 24px; right: 24px; z-index: 999; background: #0D0F18; color: #00F5D4; border: 1.5px solid #00F5D4; border-radius: 999px; padding: 0.85rem 1.4rem; font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 0.82rem; text-decoration: none; box-shadow: 0 12px 36px rgba(0, 245, 212, 0.25); display: flex; align-items: center; gap: 0.6rem; backdrop-filter: blur(12px); transition: all 0.2s;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+    <span style="width: 8px; height: 8px; border-radius: 50%; background: #00F5D4; box-shadow: 0 0 10px #00F5D4;"></span>
+    <span>⚡ LAUNCH TRADING CONSOLE ↗</span>
+  </a>
 </body>
 </html>
