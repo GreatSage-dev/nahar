@@ -716,6 +716,44 @@
       border-bottom: none;
     }
 
+    /* Custom Dedicated Tab Views */
+    .tab-view-container {
+      display: none;
+    }
+
+    .tab-view-container.active {
+      display: block;
+    }
+
+    /* Tier Matrix Table */
+    .tier-matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      margin-top: 1rem;
+    }
+
+    .tier-matrix-table th {
+      background: var(--surface-subtle);
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-weight: 700;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .tier-matrix-table td {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border-subtle);
+      font-family: var(--font-mono);
+    }
+
+    .tier-matrix-table tr.current-tier {
+      background: var(--accent-mint-soft);
+      font-weight: 700;
+    }
+
     @media (max-width: 1100px) {
       .capital-strip {
         grid-template-columns: repeat(3, 1fr);
@@ -830,248 +868,463 @@
       </div>
     </div>
 
-    <!-- Sub-Nav Facility Tabs -->
+    <!-- Sub-Nav Facility Tabs (Now fully interactive with distinct views!) -->
     <div class="facility-tab-bar">
-      <button class="tab-btn active" onclick="switchWorkstationTab('sandbox')">
+      <button class="tab-btn active" id="tabBtn-sandbox" onclick="switchWorkstationTab('sandbox')">
         <span>Isolated Execution Sandbox</span>
         <span class="tab-badge">0x9fE4...34AC</span>
       </button>
-      <button class="tab-btn" onclick="switchWorkstationTab('waterfall')">
+      <button class="tab-btn" id="tabBtn-waterfall" onclick="switchWorkstationTab('waterfall')">
         <span>Dual-Tranche Waterfall Ledger</span>
         <span class="tab-badge">Solvent</span>
       </button>
-      <button class="tab-btn" onclick="switchWorkstationTab('credit')">
+      <button class="tab-btn" id="tabBtn-credit" onclick="switchWorkstationTab('credit')">
         <span>ERC-8004 Credit Registry</span>
         <span class="tab-badge">Tier 1 • 5x</span>
       </button>
-      <button class="tab-btn" onclick="switchWorkstationTab('vault')">
+      <button class="tab-btn" id="tabBtn-vault" onclick="switchWorkstationTab('vault')">
         <span>Senior Liquidity Vault</span>
         <span class="tab-badge">$100k TVL</span>
       </button>
     </div>
 
-    <!-- Main Workstation Split View -->
-    <div class="workstation-split">
+    <!-- ========================================== -->
+    <!-- VIEW 1: Isolated Execution Sandbox (Default) -->
+    <!-- ========================================== -->
+    <div id="tabView-sandbox" class="tab-view-container active">
+      <div class="workstation-split">
 
-      <!-- LEFT PRIMARY STAGE: Execution Sandbox & Orderbook Forwarder -->
-      <div>
-        <div class="fin-panel">
-          <div class="panel-headline-row">
-            <div>
-              <div class="panel-title-text">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--accent-mint);"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                Active Execution Container (Sandbox)
+        <!-- Left Primary Stage -->
+        <div>
+          <div class="fin-panel">
+            <div class="panel-headline-row">
+              <div>
+                <div class="panel-title-text">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--accent-mint);"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                  Active Execution Container (Sandbox)
+                </div>
+                <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px;">
+                  Whitelisted Router • Enforcing Continuous Solvency on Monad
+                </div>
               </div>
-              <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px;">
-                Whitelisted Router • Enforcing Continuous Solvency on Monad
+              <span class="badge-verified-pill">NON_DRAIN_ENFORCED</span>
+            </div>
+
+            <!-- Technical Specs Ribbon -->
+            <div class="spec-grid">
+              <div>
+                <div class="spec-cell-label">Sandbox Contract</div>
+                <div class="spec-cell-val">0x9fE4643B...34AC</div>
               </div>
-            </div>
-            <span class="badge-verified-pill">NON_DRAIN_ENFORCED</span>
-          </div>
-
-          <!-- Technical Specs Ribbon -->
-          <div class="spec-grid">
-            <div>
-              <div class="spec-cell-label">Sandbox Contract</div>
-              <div class="spec-cell-val">0x9fE4643B...34AC</div>
-            </div>
-            <div>
-              <div class="spec-cell-label">Permitted Target DEX</div>
-              <div class="spec-cell-val">Perpl CLOB & Kuru AMM</div>
-            </div>
-            <div>
-              <div class="spec-cell-label">Calldata Policy</div>
-              <div class="spec-cell-val">ATOMIC_SLOT_RESTRICTED</div>
-            </div>
-          </div>
-
-          <!-- Live Tranche Waterfall Visualizer -->
-          <div class="waterfall-card-box">
-            <div class="waterfall-header-info">
-              <span>TOTAL CAPITAL: <strong id="totalCapLiveText" style="color: var(--primary-dark);">$2,500.00 USDC</strong></span>
-              <span>DYNAMIC LEVERAGE: <strong id="leverageLiveText" style="color: var(--accent-mint);">5.0x</strong></span>
-            </div>
-
-            <div class="tranche-bar-track">
-              <div class="senior-slice" id="barSeniorSlice">SENIOR TRANCHE: $2,000 (80%)</div>
-              <div class="junior-slice" id="barJuniorSlice">JUNIOR: $500 (20%)</div>
-            </div>
-
-            <div class="tranche-meta-row">
-              <span>● Senior Claim Priority: 100% Capital Immunity</span>
-              <span>● Junior Equity Buffer: Absorbs 100% First-Loss Slippage</span>
-            </div>
-          </div>
-
-          <!-- Strategy Order Routing Ticket -->
-          <div style="margin-top: 1.5rem;">
-            <div style="font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 0.6rem;">
-              SELECT MARKET ROUTING SCENARIO:
-            </div>
-
-            <div class="route-selector-grid">
-              <div class="route-card active" id="btnModeArb" onclick="selectRouteScenario('arb')">
-                <div class="route-name" style="color: var(--accent-mint);">+2.0% Spread Capture</div>
-                <div class="route-desc">Perpl CLOB arbitrage. Generates profit, funds reserve, elevates credit.</div>
+              <div>
+                <div class="spec-cell-label">Permitted Target DEX</div>
+                <div class="spec-cell-val">Perpl CLOB & Kuru AMM</div>
               </div>
-
-              <div class="route-card" id="btnModeSlip" onclick="selectRouteScenario('slip')">
-                <div class="route-name" style="color: var(--accent-amber);">-1.0% Adverse Slippage</div>
-                <div class="route-desc">Market moves against fill. 100% loss absorbed by Junior Buffer.</div>
-              </div>
-
-              <div class="route-card" id="btnModeCrash" onclick="selectRouteScenario('crash')">
-                <div class="route-name" style="color: var(--accent-red);">-30.0% Tail-Risk Dislocation</div>
-                <div class="route-desc">Black swan crash. Reserve Fund covers shortfall; Senior protected.</div>
+              <div>
+                <div class="spec-cell-label">Calldata Policy</div>
+                <div class="spec-cell-val">ATOMIC_SLOT_RESTRICTED</div>
               </div>
             </div>
 
-            <div class="action-button-row">
-              <button class="btn-exec-trade" onclick="triggerExecutionRoute()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-                Dispatch Atomic Order to Monad Slot
-              </button>
+            <!-- Live Tranche Waterfall Visualizer -->
+            <div class="waterfall-card-box">
+              <div class="waterfall-header-info">
+                <span>TOTAL CAPITAL: <strong id="totalCapLiveText" style="color: var(--primary-dark);">$2,500.00 USDC</strong></span>
+                <span>DYNAMIC LEVERAGE: <strong id="leverageLiveText" style="color: var(--accent-mint);">5.0x</strong></span>
+              </div>
 
-              <button class="btn-reconcile-settle" onclick="triggerWaterfallSettlement()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                Settle & Repay Line
-              </button>
-            </div>
-          </div>
+              <div class="tranche-bar-track">
+                <div class="senior-slice" id="barSeniorSlice">SENIOR TRANCHE: $2,000 (80%)</div>
+                <div class="junior-slice" id="barJuniorSlice">JUNIOR: $500 (20%)</div>
+              </div>
 
-          <!-- Structured Execution & Audit Ledger Table -->
-          <div class="ledger-table-wrap">
-            <table class="ledger-table">
-              <thead>
-                <tr>
-                  <th>Monad Slot</th>
-                  <th>Action / Event</th>
-                  <th>Route Target</th>
-                  <th>Inflow</th>
-                  <th>Outflow</th>
-                  <th>Loss Attribution</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody id="ledgerTableBody">
-                <tr>
-                  <td>#849,204</td>
-                  <td>Open Sandbox Facility</td>
-                  <td>NaharVault.sol</td>
-                  <td>$500.00</td>
-                  <td>$2,500.00</td>
-                  <td>None</td>
-                  <td><span class="text-mint">ACTIVE</span></td>
-                </tr>
-                <tr>
-                  <td>#849,208</td>
-                  <td>CLOB Arbitrage Swap</td>
-                  <td>Perpl CLOB (0x81B...)</td>
-                  <td>$2,500.00</td>
-                  <td>$2,550.00</td>
-                  <td>None</td>
-                  <td><span class="text-mint">+2.0% FILL</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+              <div class="tranche-meta-row">
+                <span>● Senior Claim Priority: 100% Capital Immunity</span>
+                <span>● Junior Equity Buffer: Absorbs 100% First-Loss Slippage</span>
+              </div>
+            </div>
 
-      <!-- RIGHT SIDEBAR STAGE: ERC-8004 Credit Registry & System Controls -->
-      <div>
+            <!-- Strategy Order Routing Ticket -->
+            <div style="margin-top: 1.5rem;">
+              <div style="font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 0.6rem;">
+                SELECT MARKET ROUTING SCENARIO:
+              </div>
 
-        <!-- ERC-8004 Credit Profile Card -->
-        <div class="fin-panel" style="margin-bottom: 2rem;">
-          <div class="panel-headline-row">
-            <div class="panel-title-text" style="font-size: 1.05rem;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--accent-mint);"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
-              ERC-8004 Credit Dossier
-            </div>
-            <span class="badge-verified-pill" id="badgeTierPill">TIER 1 (ESTABLISHED)</span>
-          </div>
+              <div class="route-selector-grid">
+                <div class="route-card active" id="btnModeArb" onclick="selectRouteScenario('arb')">
+                  <div class="route-name" style="color: var(--accent-mint);">+2.0% Spread Capture</div>
+                  <div class="route-desc">Perpl CLOB arbitrage. Generates profit, funds reserve, elevates credit.</div>
+                </div>
 
-          <div class="dossier-score-card">
-            <div class="dossier-top">
-              <span class="stat-label-upper">Verifiable Credit Score</span>
-              <span class="score-badge-large" id="valScoreText">335 / 1000</span>
-            </div>
-            <div class="score-progress-rail">
-              <div class="score-progress-bar" id="valScoreProgressBar"></div>
-            </div>
-            <div style="font-size: 0.72rem; color: var(--text-secondary); display: flex; justify-content: space-between;">
-              <span>Default Risk: 0.0%</span>
-              <span>Next Threshold: 400 pts</span>
-            </div>
-          </div>
+                <div class="route-card" id="btnModeSlip" onclick="selectRouteScenario('slip')">
+                  <div class="route-name" style="color: var(--accent-amber);">-1.0% Adverse Slippage</div>
+                  <div class="route-desc">Market moves against fill. 100% loss absorbed by Junior Buffer.</div>
+                </div>
 
-          <div class="dossier-data-list">
-            <div class="dossier-entry">
-              <span class="dossier-key">Agent Address</span>
-              <span class="dossier-val" style="font-size: 0.78rem;">0x5de4...365a</span>
-            </div>
-            <div class="dossier-entry">
-              <span class="dossier-key">Max Leverage Limit</span>
-              <span class="dossier-val" id="valLeverageDossier" style="color: var(--accent-mint);">5.0x</span>
-            </div>
-            <div class="dossier-entry">
-              <span class="dossier-key">Required Junior Buffer</span>
-              <span class="dossier-val" id="valBufferDossier">20.0%</span>
-            </div>
-            <div class="dossier-entry">
-              <span class="dossier-key">Verified Repaid Cycles</span>
-              <span class="dossier-val" id="valCyclesDossier">1</span>
-            </div>
-            <div class="dossier-entry">
-              <span class="dossier-key">Liquidation Defaults</span>
-              <span class="dossier-val" id="valDefaultsDossier">0</span>
-            </div>
-          </div>
+                <div class="route-card" id="btnModeCrash" onclick="selectRouteScenario('crash')">
+                  <div class="route-name" style="color: var(--accent-red);">-30.0% Tail-Risk Dislocation</div>
+                  <div class="route-desc">Black swan crash. Reserve Fund covers shortfall; Senior protected.</div>
+                </div>
+              </div>
 
-          <div class="callout-upgrade-condition">
-            <strong>Automatic Tier-2 Upgrade Policy:</strong><br>
-            Complete <strong>3 successful repayment cycles</strong> with credit score ≥ 400 to automatically scale leverage limit to <strong>10.0x</strong> and lower buffer requirement to <strong>10.0%</strong>.
-          </div>
+              <div class="action-button-row">
+                <button class="btn-exec-trade" onclick="triggerExecutionRoute()">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                  Dispatch Atomic Order to Monad Slot
+                </button>
 
-          <button class="btn-outline-action" onclick="fastForwardUpgradeCycles()">
-            ⚡ Fast-Forward 3 Repaid Cycles (Unlock 10x Tier 2)
-          </button>
-
-          <button class="btn-outline-action btn-danger-action" onclick="simulateDrainAttack()">
-            🛡️ Simulate Rogue External Drain (Assert Invariant)
-          </button>
-        </div>
-
-        <!-- Security Invariants Matrix -->
-        <div class="fin-panel">
-          <div class="panel-headline-row">
-            <div class="panel-title-text" style="font-size: 1.05rem;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--accent-mint);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-              Cryptographic Invariants Matrix
+                <button class="btn-reconcile-settle" onclick="triggerWaterfallSettlement()">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  Settle & Repay Line
+                </button>
+              </div>
             </div>
-            <span class="badge-verified-pill">ACTIVE</span>
-          </div>
 
-          <div class="checklist-row">
-            <span class="dossier-key">Non-Drain Sandbox Boundary</span>
-            <span class="dossier-val" style="color: var(--accent-mint);">ENFORCED</span>
-          </div>
-          <div class="checklist-row">
-            <span class="dossier-key">Target DEX Calldata Whitelist</span>
-            <span class="dossier-val">STRICT</span>
-          </div>
-          <div class="checklist-row">
-            <span class="dossier-key">Post-Trade Spend Allowance</span>
-            <span class="dossier-val" style="color: var(--accent-mint);">REVOKED (0)</span>
-          </div>
-          <div class="checklist-row">
-            <span class="dossier-key">Senior Loss Immunity Guarantee</span>
-            <span class="dossier-val">MATHEMATICAL</span>
+            <!-- Structured Execution & Audit Ledger Table -->
+            <div class="ledger-table-wrap">
+              <table class="ledger-table">
+                <thead>
+                  <tr>
+                    <th>Monad Slot</th>
+                    <th>Action / Event</th>
+                    <th>Route Target</th>
+                    <th>Inflow</th>
+                    <th>Outflow</th>
+                    <th>Loss Attribution</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="ledgerTableBody">
+                  <tr>
+                    <td>#849,204</td>
+                    <td>Open Sandbox Facility</td>
+                    <td>NaharVault.sol</td>
+                    <td>$500.00</td>
+                    <td>$2,500.00</td>
+                    <td>None</td>
+                    <td><span class="text-mint">ACTIVE</span></td>
+                  </tr>
+                  <tr>
+                    <td>#849,208</td>
+                    <td>CLOB Arbitrage Swap</td>
+                    <td>Perpl CLOB (0x81B...)</td>
+                    <td>$2,500.00</td>
+                    <td>$2,550.00</td>
+                    <td>None</td>
+                    <td><span class="text-mint">+2.0% FILL</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
+        <!-- Right Sidebar Stage -->
+        <div>
+          <!-- ERC-8004 Credit Profile Card -->
+          <div class="fin-panel" style="margin-bottom: 2rem;">
+            <div class="panel-headline-row">
+              <div class="panel-title-text" style="font-size: 1.05rem;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--accent-mint);"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                ERC-8004 Credit Dossier
+              </div>
+              <span class="badge-verified-pill" id="badgeTierPill">TIER 1 (ESTABLISHED)</span>
+            </div>
+
+            <div class="dossier-score-card">
+              <div class="dossier-top">
+                <span class="stat-label-upper">Verifiable Credit Score</span>
+                <span class="score-badge-large" id="valScoreText">335 / 1000</span>
+              </div>
+              <div class="score-progress-rail">
+                <div class="score-progress-bar" id="valScoreProgressBar"></div>
+              </div>
+              <div style="font-size: 0.72rem; color: var(--text-secondary); display: flex; justify-content: space-between;">
+                <span>Default Risk: 0.0%</span>
+                <span>Next Threshold: 400 pts</span>
+              </div>
+            </div>
+
+            <div class="dossier-data-list">
+              <div class="dossier-entry">
+                <span class="dossier-key">Agent Address</span>
+                <span class="dossier-val" style="font-size: 0.78rem;">0x5de4...365a</span>
+              </div>
+              <div class="dossier-entry">
+                <span class="dossier-key">Max Leverage Limit</span>
+                <span class="dossier-val" id="valLeverageDossier" style="color: var(--accent-mint);">5.0x</span>
+              </div>
+              <div class="dossier-entry">
+                <span class="dossier-key">Required Junior Buffer</span>
+                <span class="dossier-val" id="valBufferDossier">20.0%</span>
+              </div>
+              <div class="dossier-entry">
+                <span class="dossier-key">Verified Repaid Cycles</span>
+                <span class="dossier-val" id="valCyclesDossier">1</span>
+              </div>
+              <div class="dossier-entry">
+                <span class="dossier-key">Liquidation Defaults</span>
+                <span class="dossier-val" id="valDefaultsDossier">0</span>
+              </div>
+            </div>
+
+            <div class="callout-upgrade-condition">
+              <strong>Automatic Tier-2 Upgrade Policy:</strong><br>
+              Complete <strong>3 successful repayment cycles</strong> with credit score ≥ 400 to automatically scale leverage limit to <strong>10.0x</strong> and lower buffer requirement to <strong>10.0%</strong>.
+            </div>
+
+            <button class="btn-outline-action" onclick="fastForwardUpgradeCycles()">
+              ⚡ Fast-Forward 3 Repaid Cycles (Unlock 10x Tier 2)
+            </button>
+
+            <button class="btn-outline-action btn-danger-action" onclick="simulateDrainAttack()">
+              🛡️ Simulate Rogue External Drain (Assert Invariant)
+            </button>
+          </div>
+
+          <!-- Security Invariants Matrix -->
+          <div class="fin-panel">
+            <div class="panel-headline-row">
+              <div class="panel-title-text" style="font-size: 1.05rem;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--accent-mint);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                Cryptographic Invariants Matrix
+              </div>
+              <span class="badge-verified-pill">ACTIVE</span>
+            </div>
+
+            <div class="checklist-row">
+              <span class="dossier-key">Non-Drain Sandbox Boundary</span>
+              <span class="dossier-val" style="color: var(--accent-mint);">ENFORCED</span>
+            </div>
+            <div class="checklist-row">
+              <span class="dossier-key">Target DEX Calldata Whitelist</span>
+              <span class="dossier-val">STRICT</span>
+            </div>
+            <div class="checklist-row">
+              <span class="dossier-key">Post-Trade Spend Allowance</span>
+              <span class="dossier-val" style="color: var(--accent-mint);">REVOKED (0)</span>
+            </div>
+            <div class="checklist-row">
+              <span class="dossier-key">Senior Loss Immunity Guarantee</span>
+              <span class="dossier-val">MATHEMATICAL</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 2: Dual-Tranche Waterfall Ledger View -->
+    <!-- ========================================== -->
+    <div id="tabView-waterfall" class="tab-view-container">
+      <div class="fin-panel">
+        <div class="panel-headline-row">
+          <div>
+            <div class="panel-title-text">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--accent-mint);"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              Dual-Tranche Financial Waterfall & Loss Allocation Engine
+            </div>
+            <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px;">
+              Solving "Containment Is Not Repayment": Containment prevents theft; the junior buffer and protocol reserve absorb financial loss.
+            </div>
+          </div>
+          <span class="badge-verified-pill">ZERO_SENIOR_LOSS</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
+          <div style="background: var(--surface-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.5rem;">
+            <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Tier 1: Senior Lending Capital</div>
+            <div style="font-family: var(--font-mono); font-size: 1.5rem; font-weight: 800; color: var(--primary-dark); margin: 0.35rem 0;">$2,000.00 USDC</div>
+            <div style="font-size: 0.76rem; color: var(--text-secondary); line-height: 1.4;">Unconditional priority claim #1. Must be repaid in full before any capital leaves the container.</div>
+            <div style="margin-top: 0.75rem; font-size: 0.72rem; color: var(--accent-mint); font-weight: 700;">✓ Priority Solvency Enforced</div>
+          </div>
+
+          <div style="background: var(--surface-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.5rem;">
+            <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Tier 2: Junior First-Loss Buffer</div>
+            <div style="font-family: var(--font-mono); font-size: 1.5rem; font-weight: 800; color: var(--accent-mint); margin: 0.35rem 0;">$500.00 USDC (20%)</div>
+            <div style="font-size: 0.76rem; color: var(--text-secondary); line-height: 1.4;">Posted directly by the agent. Absorbs 100% of trading losses, adverse slippage, and execution fee drag.</div>
+            <div style="margin-top: 0.75rem; font-size: 0.72rem; color: var(--primary-dark); font-weight: 700;">✓ Absorbs Initial Drawdown</div>
+          </div>
+
+          <div style="background: var(--surface-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.5rem;">
+            <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Tier 3: First-Loss Protocol Reserve</div>
+            <div style="font-family: var(--font-mono); font-size: 1.5rem; font-weight: 800; color: var(--accent-amber); margin: 0.35rem 0;">$5.00 USDC</div>
+            <div style="font-size: 0.76rem; color: var(--text-secondary); line-height: 1.4;">Funded by a 10% fee on winning agent cycles. Serves as a backstop if losses ever exceed the junior buffer.</div>
+            <div style="margin-top: 0.75rem; font-size: 0.72rem; color: var(--accent-amber); font-weight: 700;">✓ Black-Swan Dislocation Moat</div>
+          </div>
+        </div>
+
+        <div style="font-size: 0.85rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 0.85rem;">
+          Step-by-Step Mathematical Waterfall Accounting:
+        </div>
+
+        <div class="ledger-table-wrap">
+          <table class="ledger-table">
+            <thead>
+              <tr>
+                <th>Phase</th>
+                <th>Mathematical Rule</th>
+                <th>Accounting Logic</th>
+                <th>Protective Outcome</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1. Trading Profit</td>
+                <td><code>proceeds &gt;= borrowed + buffer</code></td>
+                <td>Senior repaid $2k + per-sec yield; 10% profit to Reserve; agent takes 90% profit + buffer</td>
+                <td><span class="text-mint">Senior Yield Captured & Reserve Augmented</span></td>
+              </tr>
+              <tr>
+                <td>2. Mild Market Loss</td>
+                <td><code>borrowed &lt;= proceeds &lt; borrowed + buffer</code></td>
+                <td>Senior repaid 100% of $2,000.00; loss deducted 100% from Agent Buffer</td>
+                <td><span class="text-mint">Senior Depositor Loss: $0.00</span></td>
+              </tr>
+              <tr>
+                <td>3. Extreme Shortfall</td>
+                <td><code>proceeds &lt; borrowed</code></td>
+                <td>Remaining assets sent to Vault; shortfall deducted from Protocol Reserve Fund</td>
+                <td><span class="text-amber">Reserve Absorbs Tail Deficit</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 3: ERC-8004 Credit Registry View      -->
+    <!-- ========================================== -->
+    <div id="tabView-credit" class="tab-view-container">
+      <div class="fin-panel">
+        <div class="panel-headline-row">
+          <div>
+            <div class="panel-title-text">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--accent-mint);"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+              ERC-8004 Verifiable On-Chain Credit Registry & Dynamic Leverage Matrix
+            </div>
+            <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px;">
+              The Enoch Benchmark: Continuous verification of real repayment behavior dynamically scaling leverage limits on Monad.
+            </div>
+          </div>
+          <span class="badge-verified-pill">TIER 1 (FRESH)</span>
+        </div>
+
+        <div style="font-size: 0.85rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 0.85rem;">
+          Dynamic Leverage Tier Progression:
+        </div>
+
+        <table class="tier-matrix-table">
+          <thead>
+            <tr>
+              <th>Tier</th>
+              <th>Status</th>
+              <th>Credit Score Range</th>
+              <th>Required Junior Buffer</th>
+              <th>Max Leverage Multiplier</th>
+              <th>Unlock Condition</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Tier 0</td>
+              <td><span class="text-red">Penalized / Defaulted</span></td>
+              <td>0 – 199</td>
+              <td>50.0%</td>
+              <td>2.0x</td>
+              <td>Triggered on unhedged shortfall event</td>
+            </tr>
+            <tr class="current-tier">
+              <td>Tier 1</td>
+              <td><span class="text-mint">Fresh Agent (Current)</span></td>
+              <td>300 – 399</td>
+              <td>20.0%</td>
+              <td>5.0x</td>
+              <td>Initial agent registration benchmark</td>
+            </tr>
+            <tr>
+              <td>Tier 2</td>
+              <td><span>Established Desk</span></td>
+              <td>400 – 699</td>
+              <td>10.0%</td>
+              <td>10.0x</td>
+              <td>&ge; 3 successful cycles & score &ge; 400</td>
+            </tr>
+            <tr>
+              <td>Tier 3</td>
+              <td><span>Elite Monad Market Maker</span></td>
+              <td>700 – 1000</td>
+              <td>5.0%</td>
+              <td>20.0x</td>
+              <td>&ge; 10 successful cycles & score &ge; 700</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+          <button class="btn-exec-trade" style="flex: 1;" onclick="fastForwardUpgradeCycles()">
+            ⚡ Fast-Forward 3 Cycles (Elevate to Tier 2: 10x Leverage)
+          </button>
+          <button class="btn-reconcile-settle" style="flex: 1;" onclick="switchWorkstationTab('sandbox')">
+            ← Return to Execution Desk
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 4: Senior Liquidity Vault View        -->
+    <!-- ========================================== -->
+    <div id="tabView-vault" class="tab-view-container">
+      <div class="fin-panel">
+        <div class="panel-headline-row">
+          <div>
+            <div class="panel-title-text">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--accent-mint);"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+              Senior Liquidity Vault & Streaming Per-Second APY Engine
+            </div>
+            <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px;">
+              Supplying passive institutional capital to autonomous agent execution sandboxes with multi-layered credit protection.
+            </div>
+          </div>
+          <span class="badge-verified-pill">TVL: $100,000 USDC</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
+          <div style="background: var(--surface-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.5rem;">
+            <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Total Senior Deposited Liquidity</div>
+            <div style="font-family: var(--font-mono); font-size: 1.6rem; font-weight: 800; color: var(--primary-dark); margin: 0.35rem 0;" id="vaultTotalDepositsText">$100,000.00 USDC</div>
+            <div style="font-size: 0.76rem; color: var(--text-secondary);">Available Cash: $98,000.00 USDC</div>
+          </div>
+
+          <div style="background: var(--surface-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.5rem;">
+            <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Continuous Streaming APY</div>
+            <div style="font-family: var(--font-mono); font-size: 1.6rem; font-weight: 800; color: var(--accent-mint); margin: 0.35rem 0;">10.0% APY</div>
+            <div style="font-size: 0.76rem; color: var(--text-secondary);">Rate: 3.170979e-9 / second (Calculated per Monad 0.4s slot)</div>
+          </div>
+
+          <div style="background: var(--surface-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.5rem;">
+            <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Pool Capital Utilization</div>
+            <div style="font-family: var(--font-mono); font-size: 1.6rem; font-weight: 800; color: var(--primary-dark); margin: 0.35rem 0;">2.0% Active</div>
+            <div style="font-size: 0.76rem; color: var(--text-secondary);">$2,000.00 deployed in Container 0x9fE4...</div>
+          </div>
+        </div>
+
+        <div style="background: var(--surface-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 2rem;">
+          <div style="font-size: 0.85rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 0.6rem;">Senior Depositor Controls:</div>
+          <div style="display: flex; gap: 1rem;">
+            <button class="btn-exec-trade" style="flex: 1;" onclick="actionDepositSenior()">
+              + Deposit $10,000 USDC into Senior Vault
+            </button>
+            <button class="btn-reconcile-settle" style="flex: 1;" onclick="actionWithdrawSenior()">
+              - Withdraw $5,000 USDC Principal + Yield
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <script>
@@ -1102,6 +1355,18 @@
       document.getElementById('stripYieldAccrued').innerText = `+$${state.accruedYield.toFixed(6)}`;
     }, 400);
 
+    // Switch between the 4 dedicated institutional workstation tabs
+    function switchWorkstationTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-view-container').forEach(v => v.classList.remove('active'));
+
+      const activeBtn = document.getElementById('tabBtn-' + tabName);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      const activeView = document.getElementById('tabView-' + tabName);
+      if (activeView) activeView.classList.add('active');
+    }
+
     function selectRouteScenario(mode) {
       state.selectedRoute = mode;
       document.getElementById('btnModeArb').classList.remove('active');
@@ -1115,6 +1380,7 @@
 
     function appendLedgerRow(action, target, inflow, outflow, lossAttr, statusClass, statusText) {
       const tbody = document.getElementById('ledgerTableBody');
+      if (!tbody) return;
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>#${state.slot.toLocaleString()}</td>
@@ -1241,19 +1507,31 @@
       appendLedgerRow('Rogue Drain Attempt', 'External Wallet', '$2,500.00', '$0.00', 'None', 'text-red', 'REVERTED: Non-Drain Invariant Held');
     }
 
-    function switchWorkstationTab(tab) {
-      const tabs = document.querySelectorAll('.tab-btn');
-      tabs.forEach(t => t.classList.remove('active'));
-      event.currentTarget.classList.add('active');
+    function actionDepositSenior() {
+      state.seniorDeposits += 10000;
+      const vText = document.getElementById('vaultTotalDepositsText');
+      if (vText) vText.innerText = `$${state.seniorDeposits.toLocaleString()}.00 USDC`;
+      appendLedgerRow('Senior Deposit', 'NaharVault.sol', '$10,000.00', 'N/A', 'None', 'text-mint', 'DEPOSIT CONFIRMED');
+    }
+
+    function actionWithdrawSenior() {
+      if (state.seniorDeposits > 10000) {
+        state.seniorDeposits -= 5000;
+        const vText = document.getElementById('vaultTotalDepositsText');
+        if (vText) vText.innerText = `$${state.seniorDeposits.toLocaleString()}.00 USDC`;
+        appendLedgerRow('Senior Withdrawal', 'NaharVault.sol', 'N/A', '$5,000.00', 'None', 'text-mint', 'WITHDRAW CONFIRMED');
+      }
     }
 
     function setRole(role) {
       if (role === 'agent') {
         document.getElementById('btnRoleAgent').classList.add('active');
         document.getElementById('btnRoleLender').classList.remove('active');
+        switchWorkstationTab('sandbox');
       } else {
         document.getElementById('btnRoleLender').classList.add('active');
         document.getElementById('btnRoleAgent').classList.remove('active');
+        switchWorkstationTab('vault');
       }
     }
   </script>
